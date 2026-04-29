@@ -113,6 +113,14 @@ while IFS= read -r dir; do
     # 跳过没有版本信息的辅助脚本
     [[ "$version_str" == "-" ]] && continue
 
+    # 跳过冗余入口（通用规则，所有人适用）
+    [[ "$name" == *-intel64 ]] && continue      # python3-intel64, etc.
+    [[ "$name" == *-config ]] && continue       # python3-config, numpy-config, etc.
+    [[ "$name" == *.py ]] && continue           # dumppdf.py, pdf2txt.py, etc.
+    [[ "$name" == python[0-9].[0-9]* ]] && continue  # python3.14 (keep python3)
+    [[ "$name" == pip[0-9].[0-9]* ]] && continue     # pip3.14 (keep pip3)
+    [[ "$name" == pydoc[0-9].[0-9]* ]] && continue   # pydoc3.14 (keep pydoc3)
+
     # 去重：同名命令只显示第一次
     found=false
     for seen in "${SEEN_NAMES[@]}"; do

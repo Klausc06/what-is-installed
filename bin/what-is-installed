@@ -44,14 +44,13 @@ print_kvv() {
 # 版本获取
 # ============================================================================
 
-# 版本缓存：同名命令只检测一次
 VERSION_CACHE_NAMES=()
 VERSION_CACHE_VALS=()
 
 get_command_version() {
   local cmd="$1"
-
   local i
+
   for i in "${!VERSION_CACHE_NAMES[@]}"; do
     if [[ "${VERSION_CACHE_NAMES[$i]}" == "$cmd" ]]; then
       printf '%s' "${VERSION_CACHE_VALS[$i]}"
@@ -59,19 +58,17 @@ get_command_version() {
     fi
   done
 
-  local version_output=""
-  local exit_code=0
+  local version_output="" exit_code=0
 
-  # 先尝试 --version，失败再尝试 -V
   version_output="$("$cmd" --version 2>/dev/null)" || {
     version_output="$("$cmd" -V 2>/dev/null)" || exit_code=$?
   }
 
-  local result=""
+  local result="" first_line
   if [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
     result="无"
   else
-    local first_line="${version_output%%$'\n'*}"
+    first_line="${version_output%%$'\n'*}"
 
     if [[ "$first_line" =~ ([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
       result="${BASH_REMATCH[1]}"
@@ -88,20 +85,37 @@ get_command_version() {
 }
 
 # ============================================================================
-# 主输出
+# 输出
 # ============================================================================
 
-printf '\n%s\n' "已发现的命令"
+printf '\n'
 
-while IFS= read -r path; do
-  name="$(basename "$path")"
-  version_str="$(get_command_version "$name")"
-  print_kvv "$name" "$version_str" "$path"
-done < <(
-  while IFS= read -r dir; do
-    [[ -z "$dir" || ! -d "$dir" ]] && continue
-    # 跳过系统自带目录
-    [[ "$dir" == /bin || "$dir" == /sbin || "$dir" == /usr/bin || "$dir" == /usr/sbin || "$dir" == /System/* || "$dir" == /Library/Apple/* ]] && continue
-    find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null
-  done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u) | sort -u
-)
+# 收集非系统目录 → 分组输出
+while IFS= read -r dir; do
+  [[ "$dir" == /bin || "$dir" == /sbin || "$dir" == /usr/bin || "$dir" == /usr/sbin || "$dir" == /System/* || "$dir" == /Library/Apple/* ]] && continue
+  [[ -z "$dir" || ! -d "$dir" ]] && continue
+
+  # 收集该目录下的命令
+  paths="$(find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null | sort -u)"
+  [[ -z "$paths" ]] && continue
+
+  # 分类标题
+  case "$dir" in
+    */.local/bin)        printf '[用户本地]\n' ;;
+    */.npm-global/bin)   printf '[npm 全局]\n' ;;
+    /opt/homebrew/bin)   printf '[Homebrew]\n' ;;
+    */Library/Frameworks/Python.framework/*/bin) printf '[Python 框架]\n' ;;
+    */usr/local/bin)     printf '[系统本地]\n' ;;
+    */usr/local/sbin)    printf '[系统本地]\n' ;;
+    *)                   printf '[其他]\n' ;;
+  esac
+
+  # 逐条输出
+  while IFS= read -r path; do
+    name="$(basename "$path")"
+    version_str="$(get_command_version "$name")"
+    print_kvv "$name" "$version_str" "$path"
+  done <<< "$paths"
+
+  printf '\n'
+done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u)

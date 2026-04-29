@@ -2,10 +2,6 @@
 set -euo pipefail
 
 # what-is-installed — 命令行工具扫描器
-#
-# 职责：扫描用户系统中常见的命令行工具安装位置，展示已安装的工具及其版本信息
-
-QUIET_MODE=false
 
 # ============================================================================
 # 扫描目录配置
@@ -38,17 +34,12 @@ usage() {
 Usage: what-is-installed [OPTIONS]
 
 Options:
-  --quiet        只显示扫描结果，不显示说明注释
   --help, -h     显示帮助信息
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --quiet)
-      QUIET_MODE=true
-      shift
-      ;;
     --help|-h)
       usage
       exit 0
@@ -71,11 +62,6 @@ print_section() {
 
 print_kvv() {
   printf '%-18s %-14s %s\n' "$1" "$2" "$3"
-}
-
-print_note() {
-  [[ "$QUIET_MODE" == true ]] && return
-  printf '%s\n' "$1"
 }
 
 # ============================================================================
@@ -182,7 +168,6 @@ print_found_commands() {
 
 print_section "已发现的命令"
 print_found_commands
-print_note "说明: 这里只展示在常见安装目录里实际搜索到的可执行命令。"
 
 print_section "Homebrew 包"
 if command -v brew >/dev/null 2>&1; then
@@ -190,7 +175,6 @@ if command -v brew >/dev/null 2>&1; then
 else
   printf '%s\n' "未找到 brew"
 fi
-print_note "说明: 这一段列的是 brew 安装的命令行工具和版本。"
 
 print_section "npm 全局包"
 if command -v npm >/dev/null 2>&1; then
@@ -198,7 +182,6 @@ if command -v npm >/dev/null 2>&1; then
 else
   printf '%s\n' "未找到 npm"
 fi
-print_note "说明: 这一段列的是通过 npm 全局安装的包。"
 
 print_section "pip 用户包"
 if command -v python3 >/dev/null 2>&1; then
@@ -206,4 +189,3 @@ if command -v python3 >/dev/null 2>&1; then
 else
   printf '%s\n' "未找到 python3"
 fi
-print_note "说明: 这一段列的是 pip --user 安装的 Python 包。"

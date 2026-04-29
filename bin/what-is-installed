@@ -90,6 +90,9 @@ get_command_version() {
 
 printf '\n'
 
+# 去重：同名命令只显示第一次出现的位置
+SEEN_NAMES=("")
+
 # 收集非系统目录 → 分组输出
 while IFS= read -r dir; do
   [[ "$dir" == /bin || "$dir" == /sbin || "$dir" == /usr/bin || "$dir" == /usr/sbin || "$dir" == /System/* || "$dir" == /Library/Apple/* ]] && continue
@@ -109,6 +112,14 @@ while IFS= read -r dir; do
 
     # 跳过没有版本信息的辅助脚本
     [[ "$version_str" == "-" ]] && continue
+
+    # 去重：同名命令只显示第一次
+    found=false
+    for seen in "${SEEN_NAMES[@]}"; do
+      [[ "$seen" == "$name" ]] && { found=true; break; }
+    done
+    [[ "$found" == true ]] && continue
+    SEEN_NAMES+=("$name")
 
     if [[ "$section_header_printed" == false ]]; then
       case "$dir" in

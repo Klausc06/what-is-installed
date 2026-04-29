@@ -2,6 +2,8 @@
 set -euo pipefail
 
 # what-is-installed — 命令行工具扫描器
+#
+# 扫描 $PATH 中所有目录，展示实际可用的命令及其版本
 
 # ============================================================================
 # 扫描目录配置
@@ -63,10 +65,6 @@ print_section() {
 print_kvv() {
   printf '%-18s %-14s %s\n' "$1" "$2" "$3"
 }
-
-# ============================================================================
-# 超时工具（兼容 macOS）
-# ============================================================================
 
 TIMEOUT_SEC=0.3
 
@@ -144,24 +142,19 @@ get_command_version() {
 # ============================================================================
 
 print_found_commands() {
-  local dir path name found=0
+  local dir path name version_str
 
-  for dir in "${SCAN_DIRS[@]}"; do
-    [[ -d "$dir" ]] || continue
-    while IFS= read -r path; do
-      [[ -n "$path" ]] || continue
-      name="$(basename "$path")"
-
-      local version_str
-      version_str="$(get_command_version "$name")"
-      print_kvv "$name" "$version_str" "$path"
-      found=1
-    done < <(find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 | sort)
-  done
-
-  if [[ "$found" -eq 0 ]]; then
-    printf '%s\n' "未找到"
-  fi
+  # 扫描 $PATH → 收集可执行文件 → 去重 → 逐条检测版本并输出
+  while IFS= read -r path; do
+    name="$(basename "$path")"
+    version_str="$(get_command_version "$name")"
+    print_kvv "$name" "$version_str" "$path"
+  done < <(
+    while IFS= read -r dir; do
+      [[ -z "$dir" || ! -d "$dir" ]] && continue
+      find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null
+    done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u) | sort -u
+  )
 }
 
 # ============================================================================

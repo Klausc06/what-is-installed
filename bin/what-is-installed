@@ -14,7 +14,7 @@ usage() {
 Usage: what-is-installed [OPTIONS]
 
 Options:
-  --help, -h     显示帮助信息
+  --help, -h     Show this help message
 EOF
 }
 
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      printf '未知参数: %s\n' "$1" >&2
+      printf 'Unknown option: %s\n' "$1" >&2
       usage >&2
       exit 1
       ;;
@@ -66,7 +66,7 @@ get_command_version() {
 
   local result="" first_line
   if [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
-    result="无"
+    result="-"
   else
     first_line="${version_output%%$'\n'*}"
 
@@ -101,13 +101,13 @@ while IFS= read -r dir; do
 
   # 分类标题
   case "$dir" in
-    */.local/bin)        printf '[用户本地]\n' ;;
-    */.npm-global/bin)   printf '[npm 全局]\n' ;;
+    */.local/bin)        printf '[User Local]\n' ;;
+    */.npm-global/bin)   printf '[npm Global]\n' ;;
     /opt/homebrew/bin)   printf '[Homebrew]\n' ;;
-    */Library/Frameworks/Python.framework/*/bin) printf '[Python 框架]\n' ;;
-    */usr/local/bin)     printf '[系统本地]\n' ;;
-    */usr/local/sbin)    printf '[系统本地]\n' ;;
-    *)                   printf '[其他]\n' ;;
+    */Library/Frameworks/Python.framework/*/bin) printf '[Python Framework]\n' ;;
+    */usr/local/bin)     printf '[System Local]\n' ;;
+    */usr/local/sbin)    printf '[System Local]\n' ;;
+    *)                   printf '[Other]\n' ;;
   esac
 
   # 逐条输出

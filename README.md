@@ -1,32 +1,19 @@
 # what-is-installed
 
-A small shell tool that shows what command-line tools are actually installed in common user-facing locations.
+A small shell tool that shows what command-line tools are actually available in your `$PATH`.
 
 ## Features
 
-- Scans all common install locations by default:
-  - `~/.local/bin`
-  - `~/.npm-global/bin`
-  - `/opt/homebrew/bin`
-  - `~/.cargo/bin` (Rust / Cargo)
-  - `~/go/bin` (Go install)
-  - `~/.local/pipx/venvs` (pipx)
-  - `~/miniconda3/bin` (Conda)
-  - `~/.local/share/mise/shims` (mise)
-  - `~/.asdf/shims` (asdf)
-  - `~/Library/pnpm` (pnpm)
-  - `/usr/local/bin` (traditional Unix)
+- **Dynamically scans all directories in `$PATH`** — no hardcoded list to maintain
 - Shows **version info** for every discovered command
 - Lists Homebrew formulas, npm global packages, and pip user packages
-- Supports `--quiet` mode (only results, no notes)
 - Cross-platform: works on macOS and Linux
 - Zero external dependencies
 
 ## Usage
 
 ```bash
-./bin/what-is-installed           # default: scan all, show versions
-./bin/what-is-installed --quiet   # only show results, no notes
+./bin/what-is-installed
 ```
 
 ## Example Output
@@ -54,10 +41,14 @@ Package    Version
 pip        25.3
 ```
 
-## Notes
+## How it works
 
-- Version detection tries `--version` first, then `-V`, with a 1-second timeout per command.
-- Use `--quiet` to hide all notes and comments.
+1. Reads your `$PATH` environment variable
+2. For each directory in `$PATH`, finds all executable files
+3. Tries `--version` (or `-V` as fallback) on each command
+4. Extracts the version number using regex
+5. Deduplicates identical paths (same file in multiple `$PATH` entries)
+6. Caches version results (same command name only checked once)
 
 ## License
 

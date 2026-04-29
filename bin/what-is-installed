@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# what-is-installed — 极简版命令行工具扫描器
+# what-is-installed — 命令行工具扫描器
 #
 # 职责：扫描用户系统中常见的命令行工具安装位置，展示已安装的工具及其版本信息
-# 设计原则：默认扫描所有目录，默认显示版本，极简参数
 
-LANGUAGE=""
 QUIET_MODE=false
 
 # ============================================================================
-# 扫描目录配置（全部默认扫描）
+# 扫描目录配置
 # ============================================================================
 
 SCAN_DIRS=(
@@ -32,7 +30,7 @@ SCAN_DIRS=(
 )
 
 # ============================================================================
-# 命令参数解析
+# 参数解析
 # ============================================================================
 
 usage() {
@@ -40,19 +38,13 @@ usage() {
 Usage: what-is-installed [OPTIONS]
 
 Options:
-  --lang zh|en   Output language. Supported: zh, en
-  --quiet        Only show scan results, no notes/comments
-  --help, -h     Show this help message
+  --quiet        只显示扫描结果，不显示说明注释
+  --help, -h     显示帮助信息
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --lang)
-      [[ $# -ge 2 ]] || { printf '%s\n' "Missing value for --lang" >&2; exit 1; }
-      LANGUAGE="$2"
-      shift 2
-      ;;
     --quiet)
       QUIET_MODE=true
       shift
@@ -62,128 +54,12 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      printf 'Unknown argument: %s\n' "$1" >&2
+      printf '未知参数: %s\n' "$1" >&2
       usage >&2
       exit 1
       ;;
   esac
 done
-
-# ============================================================================
-# 语言/国际化
-# ============================================================================
-
-resolve_lang() {
-  if [[ -n "$LANGUAGE" ]]; then
-    printf '%s\n' "$LANGUAGE"
-    return
-  fi
-
-  case "${LC_ALL:-${LANG:-}}" in
-    zh*|ZH*)
-      printf '%s\n' "zh"
-      ;;
-    *)
-      printf '%s\n' "en"
-      ;;
-  esac
-}
-
-LANGUAGE="$(resolve_lang)"
-
-t() {
-  local key="$1"
-  case "$LANGUAGE:$key" in
-    zh:usage_missing_lang) printf '%s\n' "缺少 --lang 的取值" ;;
-    zh:summary) printf '%s\n' "概览" ;;
-    zh:local_bin) printf '%s\n' "用户命令目录" ;;
-    zh:npm_bin) printf '%s\n' "npm 全局目录" ;;
-    zh:homebrew_bin) printf '%s\n' "Homebrew 目录" ;;
-    zh:summary_note) printf '%s\n' "说明: 这三处通常分别对应用户级命令、npm 全局命令和 Homebrew 命令。" ;;
-    zh:found_commands) printf '%s\n' "已发现的命令" ;;
-    zh:found_commands_note) printf '%s\n' "说明: 这里只展示在常见安装目录里实际搜索到的可执行命令。" ;;
-    zh:local_bin_section) printf '%s\n' "~/.local/bin" ;;
-    zh:local_bin_note) printf '%s\n' "说明: 这是用户目录下最常见的自装命令位置。" ;;
-    zh:npm_bin_section) printf '%s\n' "~/.npm-global/bin" ;;
-    zh:npm_bin_note) printf '%s\n' "说明: 这里放的是 npm -g 安装出来的命令入口。" ;;
-    zh:homebrew_bin_section) printf '%s\n' "/opt/homebrew/bin" ;;
-    zh:homebrew_bin_note) printf '%s\n' "说明: 这里放的是通过 Homebrew 安装的常用命令。" ;;
-    zh:cargo_section) printf '%s\n' "~/.cargo/bin" ;;
-    zh:cargo_note) printf '%s\n' "说明: Rust / Cargo 安装的工具。" ;;
-    zh:go_section) printf '%s\n' "~/go/bin" ;;
-    zh:go_note) printf '%s\n' "说明: Go install 安装的命令。" ;;
-    zh:conda_section) printf '%s\n' "Conda 环境" ;;
-    zh:conda_note) printf '%s\n' "说明: Conda / Miniconda 安装的包。" ;;
-    zh:mise_section) printf '%s\n' "mise / asdf" ;;
-    zh:mise_note) printf '%s\n' "说明: 多版本运行时管理器安装的 shims。" ;;
-    zh:other_section) printf '%s\n' "其他目录" ;;
-    zh:other_note) printf '%s\n' "说明: 其他常见安装位置。" ;;
-    zh:brew_formulas) printf '%s\n' "Homebrew 包" ;;
-    zh:brew_formulas_note) printf '%s\n' "说明: 这一段列的是 brew 安装的命令行工具和版本。" ;;
-    zh:npm_packages) printf '%s\n' "npm 全局包" ;;
-    zh:npm_packages_note) printf '%s\n' "说明: 这一段列的是通过 npm 全局安装的包。" ;;
-    zh:pip_packages) printf '%s\n' "pip 用户包" ;;
-    zh:pip_packages_note) printf '%s\n' "说明: 这一段列的是 pip --user 安装的 Python 包。" ;;
-    zh:path_entries) printf '%s\n' "PATH 目录" ;;
-    zh:path_entries_note) printf '%s\n' "说明: 终端会按这里的顺序查找命令，排在前面的目录优先级更高。" ;;
-    zh:none_found) printf '%s\n' "未找到" ;;
-    zh:missing) printf '%s\n' "不存在" ;;
-    zh:brew_failed) printf '%s\n' "brew list 失败" ;;
-    zh:brew_missing) printf '%s\n' "未找到 brew" ;;
-    zh:npm_failed) printf '%s\n' "npm ls 失败" ;;
-    zh:npm_missing) printf '%s\n' "未找到 npm" ;;
-    zh:pip_failed) printf '%s\n' "pip list 失败" ;;
-    zh:python_missing) printf '%s\n' "未找到 python3" ;;
-    zh:version_timeout) printf '%s\n' "获取超时" ;;
-    zh:version_error) printf '%s\n' "获取失败" ;;
-    zh:extended_scan_note) printf '%s\n' "扩展扫描模式已启用，包含更多安装目录。" ;;
-    en:summary) printf '%s\n' "Quick Summary" ;;
-    en:local_bin) printf '%s\n' "local bin" ;;
-    en:npm_bin) printf '%s\n' "npm global" ;;
-    en:homebrew_bin) printf '%s\n' "homebrew" ;;
-    en:summary_note) printf '%s\n' "Note: These usually map to user-installed commands, npm global commands, and Homebrew commands." ;;
-    en:found_commands) printf '%s\n' "Found Commands" ;;
-    en:found_commands_note) printf '%s\n' "Note: This section only shows executables actually found in the common install directories." ;;
-    en:local_bin_section) printf '%s\n' "~/.local/bin" ;;
-    en:local_bin_note) printf '%s\n' "Note: This is the most common location for user-installed commands." ;;
-    en:npm_bin_section) printf '%s\n' "~/.npm-global/bin" ;;
-    en:npm_bin_note) printf '%s\n' "Note: This directory contains command entry points created by npm -g." ;;
-    en:homebrew_bin_section) printf '%s\n' "/opt/homebrew/bin" ;;
-    en:homebrew_bin_note) printf '%s\n' "Note: This directory contains commands installed through Homebrew." ;;
-    en:cargo_section) printf '%s\n' "~/.cargo/bin" ;;
-    en:cargo_note) printf '%s\n' "Note: Tools installed via Rust / Cargo." ;;
-    en:go_section) printf '%s\n' "~/go/bin" ;;
-    en:go_note) printf '%s\n' "Note: Commands installed via go install." ;;
-    en:conda_section) printf '%s\n' "Conda Environments" ;;
-    en:conda_note) printf '%s\n' "Note: Packages installed via Conda / Miniconda." ;;
-    en:mise_section) printf '%s\n' "mise / asdf" ;;
-    en:mise_note) printf '%s\n' "Note: Shims from multi-version runtime managers." ;;
-    en:other_section) printf '%s\n' "Other Directories" ;;
-    en:other_note) printf '%s\n' "Note: Other common install locations." ;;
-    en:brew_formulas) printf '%s\n' "Homebrew Formulas" ;;
-    en:brew_formulas_note) printf '%s\n' "Note: This section lists command-line packages and versions installed by brew." ;;
-    en:npm_packages) printf '%s\n' "npm Global Packages" ;;
-    en:npm_packages_note) printf '%s\n' "Note: This section lists packages installed globally with npm." ;;
-    en:pip_packages) printf '%s\n' "pip User Packages" ;;
-    en:pip_packages_note) printf '%s\n' "Note: This section lists Python packages installed with pip --user." ;;
-    en:path_entries) printf '%s\n' "PATH Entries" ;;
-    en:path_entries_note) printf '%s\n' "Note: Your shell searches these directories in order. Earlier entries win." ;;
-    en:none_found) printf '%s\n' "none found" ;;
-    en:missing) printf '%s\n' "missing" ;;
-    en:brew_failed) printf '%s\n' "brew list failed" ;;
-    en:brew_missing) printf '%s\n' "brew not found" ;;
-    en:npm_failed) printf '%s\n' "npm ls failed" ;;
-    en:npm_missing) printf '%s\n' "npm not found" ;;
-    en:pip_failed) printf '%s\n' "pip list failed" ;;
-    en:python_missing) printf '%s\n' "python3 not found" ;;
-    en:version_timeout) printf '%s\n' "timeout" ;;
-    en:version_error) printf '%s\n' "failed" ;;
-    en:extended_scan_note) printf '%s\n' "Extended scan mode enabled, including more install directories." ;;
-    *)
-      printf '%s\n' "$key"
-      ;;
-  esac
-}
 
 # ============================================================================
 # 输出辅助函数
@@ -194,7 +70,6 @@ print_section() {
 }
 
 print_kvv() {
-  # key + version + path 三列输出
   printf '%-18s %-14s %s\n' "$1" "$2" "$3"
 }
 
@@ -204,7 +79,7 @@ print_note() {
 }
 
 # ============================================================================
-# 超时工具（兼容 macOS，零外部依赖）
+# 超时工具（兼容 macOS）
 # ============================================================================
 
 TIMEOUT_CMD=""
@@ -256,12 +131,12 @@ get_command_version() {
   esac
 
   if [[ $exit_code -eq 124 ]]; then
-    printf '%s' "$(t version_timeout)"
+    printf '%s' "获取超时"
     return
   fi
 
   if [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
-    printf '%s' "$(t version_error)"
+    printf '%s' "获取失败"
     return
   fi
 
@@ -277,7 +152,7 @@ get_command_version() {
 }
 
 # ============================================================================
-# 命令发现与展示
+# 命令发现
 # ============================================================================
 
 print_found_commands() {
@@ -297,7 +172,7 @@ print_found_commands() {
   done
 
   if [[ "$found" -eq 0 ]]; then
-    printf '%s\n' "$(t none_found)"
+    printf '%s\n' "未找到"
   fi
 }
 
@@ -305,30 +180,30 @@ print_found_commands() {
 # 主输出
 # ============================================================================
 
-print_section "$(t found_commands)"
+print_section "已发现的命令"
 print_found_commands
-print_note "$(t found_commands_note)"
+print_note "说明: 这里只展示在常见安装目录里实际搜索到的可执行命令。"
 
-print_section "$(t brew_formulas)"
+print_section "Homebrew 包"
 if command -v brew >/dev/null 2>&1; then
-  brew list --formula --versions 2>/dev/null || printf '%s\n' "$(t brew_failed)"
+  brew list --formula --versions 2>/dev/null || printf '%s\n' "brew list 失败"
 else
-  printf '%s\n' "$(t brew_missing)"
+  printf '%s\n' "未找到 brew"
 fi
-print_note "$(t brew_formulas_note)"
+print_note "说明: 这一段列的是 brew 安装的命令行工具和版本。"
 
-print_section "$(t npm_packages)"
+print_section "npm 全局包"
 if command -v npm >/dev/null 2>&1; then
-  npm ls -g --depth=0 --prefix "$HOME/.npm-global" 2>/dev/null || printf '%s\n' "$(t npm_failed)"
+  npm ls -g --depth=0 --prefix "$HOME/.npm-global" 2>/dev/null || printf '%s\n' "npm ls 失败"
 else
-  printf '%s\n' "$(t npm_missing)"
+  printf '%s\n' "未找到 npm"
 fi
-print_note "$(t npm_packages_note)"
+print_note "说明: 这一段列的是通过 npm 全局安装的包。"
 
-print_section "$(t pip_packages)"
+print_section "pip 用户包"
 if command -v python3 >/dev/null 2>&1; then
-  python3 -m pip list --user 2>/dev/null || printf '%s\n' "$(t pip_failed)"
+  python3 -m pip list --user 2>/dev/null || printf '%s\n' "pip list 失败"
 else
-  printf '%s\n' "$(t python_missing)"
+  printf '%s\n' "未找到 python3"
 fi
-print_note "$(t pip_packages_note)"
+print_note "说明: 这一段列的是 pip --user 安装的 Python 包。"

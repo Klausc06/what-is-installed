@@ -6,28 +6,6 @@ set -euo pipefail
 # 扫描 $PATH 中所有目录，展示实际可用的命令及其版本
 
 # ============================================================================
-# 扫描目录配置
-# ============================================================================
-
-SCAN_DIRS=(
-  "$HOME/.local/bin"
-  "$HOME/.npm-global/bin"
-  "/opt/homebrew/bin"
-  "$HOME/.cargo/bin"
-  "$HOME/go/bin"
-  "$HOME/.local/pipx/venvs"
-  "$HOME/.local/bin/pipx"
-  "$HOME/miniconda3/bin"
-  "$HOME/anaconda3/bin"
-  "$HOME/.local/share/mise/shims"
-  "$HOME/.asdf/shims"
-  "/home/linuxbrew/.linuxbrew/bin"
-  "$HOME/Library/pnpm"
-  "/usr/local/bin"
-  "/usr/local/sbin"
-)
-
-# ============================================================================
 # 参数解析
 # ============================================================================
 
@@ -58,30 +36,8 @@ done
 # 输出辅助函数
 # ============================================================================
 
-print_section() {
-  printf '\n[%s]\n' "$1"
-}
-
 print_kvv() {
   printf '%-18s %-14s %s\n' "$1" "$2" "$3"
-}
-
-TIMEOUT_SEC=0.3
-
-TIMEOUT_CMD=""
-if command -v timeout >/dev/null 2>&1; then
-  TIMEOUT_CMD="timeout"
-elif command -v gtimeout >/dev/null 2>&1; then
-  TIMEOUT_CMD="gtimeout"
-fi
-
-run_with_timeout() {
-  # 有 timeout 命令时使用它，否则直接运行
-  if [[ -n "$TIMEOUT_CMD" ]]; then
-    "$TIMEOUT_CMD" "$TIMEOUT_SEC" "$@" 2>&1
-    return $?
-  fi
-  "$@" 2>&1
 }
 
 # ============================================================================
@@ -95,7 +51,6 @@ VERSION_CACHE_VALS=()
 get_command_version() {
   local cmd="$1"
 
-  # 命中缓存直接返回
   local i
   for i in "${!VERSION_CACHE_NAMES[@]}"; do
     if [[ "${VERSION_CACHE_NAMES[$i]}" == "$cmd" ]]; then
@@ -107,18 +62,13 @@ get_command_version() {
   local version_output=""
   local exit_code=0
 
-  # 先尝试 --version
-  version_output="$(run_with_timeout "$cmd" --version)" || exit_code=$?
-
-  # 只有快速失败（非超时）才尝试 -V
-  if [[ $exit_code -ne 0 && $exit_code -ne 124 ]]; then
-    version_output="$(run_with_timeout "$cmd" -V)" || exit_code=$?
-  fi
+  # 先尝试 --version，失败再尝试 -V
+  version_output="$("$cmd" --version 2>/dev/null)" || {
+    version_output="$("$cmd" -V 2>/dev/null)" || exit_code=$?
+  }
 
   local result=""
-  if [[ $exit_code -eq 124 ]]; then
-    result="无"
-  elif [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
+  if [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
     result="无"
   else
     local first_line="${version_output%%$'\n'*}"
@@ -138,49 +88,18 @@ get_command_version() {
 }
 
 # ============================================================================
-# 命令发现
-# ============================================================================
-
-print_found_commands() {
-  local dir path name version_str
-
-  # 扫描 $PATH → 收集可执行文件 → 去重 → 逐条检测版本并输出
-  while IFS= read -r path; do
-    name="$(basename "$path")"
-    version_str="$(get_command_version "$name")"
-    print_kvv "$name" "$version_str" "$path"
-  done < <(
-    while IFS= read -r dir; do
-      [[ -z "$dir" || ! -d "$dir" ]] && continue
-      find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null
-    done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u) | sort -u
-  )
-}
-
-# ============================================================================
 # 主输出
 # ============================================================================
 
-print_section "已发现的命令"
-print_found_commands
+printf '\n%s\n' "已发现的命令"
 
-print_section "Homebrew 包"
-if command -v brew >/dev/null 2>&1; then
-  HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula --versions 2>/dev/null || printf '%s\n' "brew list 失败"
-else
-  printf '%s\n' "未找到 brew"
-fi
-
-print_section "npm 全局包"
-if command -v npm >/dev/null 2>&1; then
-  npm ls -g --depth=0 --prefix "$HOME/.npm-global" 2>/dev/null || printf '%s\n' "npm ls 失败"
-else
-  printf '%s\n' "未找到 npm"
-fi
-
-print_section "pip 用户包"
-if command -v python3 >/dev/null 2>&1; then
-  python3 -m pip list --user 2>/dev/null || printf '%s\n' "pip list 失败"
-else
-  printf '%s\n' "未找到 python3"
-fi
+while IFS= read -r path; do
+  name="$(basename "$path")"
+  version_str="$(get_command_version "$name")"
+  print_kvv "$name" "$version_str" "$path"
+done < <(
+  while IFS= read -r dir; do
+    [[ -z "$dir" || ! -d "$dir" ]] && continue
+    find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null
+  done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u) | sort -u
+)

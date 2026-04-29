@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LANGUAGE=""
+
+usage() {
+  cat <<'EOF'
+Usage: what-is-installed [--lang zh|en] [--help]
+
+Options:
+  --lang   Output language. Supported: zh, en
+  --help   Show this help message
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --lang)
+      [[ $# -ge 2 ]] || { printf '%s\n' "Missing value for --lang" >&2; exit 1; }
+      LANGUAGE="$2"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+resolve_lang() {
+  if [[ -n "$LANGUAGE" ]]; then
+    printf '%s\n' "$LANGUAGE"
+    return
+  fi
+
+  case "${LC_ALL:-${LANG:-}}" in
+    zh*|ZH*)
+      printf '%s\n' "zh"
+      ;;
+    *)
+      printf '%s\n' "en"
+      ;;
+  esac
+}
+
+LANGUAGE="$(resolve_lang)"
+
+t() {
+  local key="$1"
+  case "$LANGUAGE:$key" in
+    zh:usage_missing_lang) printf '%s\n' "缺少 --lang 的取值" ;;
+    zh:summary) printf '%s\n' "概览" ;;
+    zh:local_bin) printf '%s\n' "用户命令目录" ;;
+    zh:npm_bin) printf '%s\n' "npm 全局目录" ;;
+    zh:homebrew_bin) printf '%s\n' "Homebrew 目录" ;;
+    zh:summary_note) printf '%s\n' "说明: 这三处通常分别对应用户级命令、npm 全局命令和 Homebrew 命令。" ;;
+    zh:found_commands) printf '%s\n' "已发现的命令" ;;
+    zh:found_commands_note) printf '%s\n' "说明: 这里只展示在常见安装目录里实际搜索到的可执行命令。" ;;
+    zh:local_bin_section) printf '%s\n' "~/.local/bin" ;;
+    zh:local_bin_note) printf '%s\n' "说明: 这是用户目录下最常见的自装命令位置。" ;;
+    zh:npm_bin_section) printf '%s\n' "~/.npm-global/bin" ;;
+    zh:npm_bin_note) printf '%s\n' "说明: 这里放的是 npm -g 安装出来的命令入口。" ;;
+    zh:homebrew_bin_section) printf '%s\n' "/opt/homebrew/bin" ;;
+    zh:homebrew_bin_note) printf '%s\n' "说明: 这里放的是通过 Homebrew 安装的常用命令。" ;;
+    zh:brew_formulas) printf '%s\n' "Homebrew 包" ;;
+    zh:brew_formulas_note) printf '%s\n' "说明: 这一段列的是 brew 安装的命令行工具和版本。" ;;
+    zh:npm_packages) printf '%s\n' "npm 全局包" ;;
+    zh:npm_packages_note) printf '%s\n' "说明: 这一段列的是通过 npm 全局安装的包。" ;;
+    zh:pip_packages) printf '%s\n' "pip 用户包" ;;
+    zh:pip_packages_note) printf '%s\n' "说明: 这一段列的是 pip --user 安装的 Python 包。" ;;
+    zh:path_entries) printf '%s\n' "PATH 目录" ;;
+    zh:path_entries_note) printf '%s\n' "说明: 终端会按这里的顺序查找命令，排在前面的目录优先级更高。" ;;
+    zh:none_found) printf '%s\n' "未找到" ;;
+    zh:missing) printf '%s\n' "不存在" ;;
+    zh:brew_failed) printf '%s\n' "brew list 失败" ;;
+    zh:brew_missing) printf '%s\n' "未找到 brew" ;;
+    zh:npm_failed) printf '%s\n' "npm ls 失败" ;;
+    zh:npm_missing) printf '%s\n' "未找到 npm" ;;
+    zh:pip_failed) printf '%s\n' "pip list 失败" ;;
+    zh:python_missing) printf '%s\n' "未找到 python3" ;;
+    en:summary) printf '%s\n' "Quick Summary" ;;
+    en:local_bin) printf '%s\n' "local bin" ;;
+    en:npm_bin) printf '%s\n' "npm global" ;;
+    en:homebrew_bin) printf '%s\n' "homebrew" ;;
+    en:summary_note) printf '%s\n' "Note: These usually map to user-installed commands, npm global commands, and Homebrew commands." ;;
+    en:found_commands) printf '%s\n' "Found Commands" ;;
+    en:found_commands_note) printf '%s\n' "Note: This section only shows executables actually found in the common install directories." ;;
+    en:local_bin_section) printf '%s\n' "~/.local/bin" ;;
+    en:local_bin_note) printf '%s\n' "Note: This is the most common location for user-installed commands." ;;
+    en:npm_bin_section) printf '%s\n' "~/.npm-global/bin" ;;
+    en:npm_bin_note) printf '%s\n' "Note: This directory contains command entry points created by npm -g." ;;
+    en:homebrew_bin_section) printf '%s\n' "/opt/homebrew/bin" ;;
+    en:homebrew_bin_note) printf '%s\n' "Note: This directory contains commands installed through Homebrew." ;;
+    en:brew_formulas) printf '%s\n' "Homebrew Formulas" ;;
+    en:brew_formulas_note) printf '%s\n' "Note: This section lists command-line packages and versions installed by brew." ;;
+    en:npm_packages) printf '%s\n' "npm Global Packages" ;;
+    en:npm_packages_note) printf '%s\n' "Note: This section lists packages installed globally with npm." ;;
+    en:pip_packages) printf '%s\n' "pip User Packages" ;;
+    en:pip_packages_note) printf '%s\n' "Note: This section lists Python packages installed with pip --user." ;;
+    en:path_entries) printf '%s\n' "PATH Entries" ;;
+    en:path_entries_note) printf '%s\n' "Note: Your shell searches these directories in order. Earlier entries win." ;;
+    en:none_found) printf '%s\n' "none found" ;;
+    en:missing) printf '%s\n' "missing" ;;
+    en:brew_failed) printf '%s\n' "brew list failed" ;;
+    en:brew_missing) printf '%s\n' "brew not found" ;;
+    en:npm_failed) printf '%s\n' "npm ls failed" ;;
+    en:npm_missing) printf '%s\n' "npm not found" ;;
+    en:pip_failed) printf '%s\n' "pip list failed" ;;
+    en:python_missing) printf '%s\n' "python3 not found" ;;
+    *)
+      printf '%s\n' "$key"
+      ;;
+  esac
+}
+
+print_section() {
+  printf '\n[%s]\n' "$1"
+}
+
+print_kv() {
+  printf '%-16s %s\n' "$1" "$2"
+}
+
+print_note() {
+  printf '%s\n' "$1"
+}
+
+print_found_commands() {
+  local dirs=("$HOME/.local/bin" "$HOME/.npm-global/bin" "/opt/homebrew/bin")
+  local dir path name found=0
+
+  for dir in "${dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    while IFS= read -r path; do
+      [[ -n "$path" ]] || continue
+      name="$(basename "$path")"
+      print_kv "$name" "$path"
+      found=1
+    done < <(find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 | sort)
+  done
+
+  if [[ "$found" -eq 0 ]]; then
+    printf '%s\n' "$(t none_found)"
+  fi
+}
+
+list_dir_names() {
+  local dir="$1"
+  if [[ -d "$dir" ]]; then
+    find "$dir" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort
+  else
+    printf '%s\n' "$(t missing)"
+  fi
+}
+
+print_section "$(t summary)"
+print_kv "$(t local_bin)" "$HOME/.local/bin"
+print_kv "$(t npm_bin)" "$HOME/.npm-global/bin"
+print_kv "$(t homebrew_bin)" "/opt/homebrew/bin"
+print_note "$(t summary_note)"
+
+print_section "$(t found_commands)"
+print_found_commands
+print_note "$(t found_commands_note)"
+
+print_section "$(t local_bin_section)"
+list_dir_names "$HOME/.local/bin"
+print_note "$(t local_bin_note)"
+
+print_section "$(t npm_bin_section)"
+list_dir_names "$HOME/.npm-global/bin"
+print_note "$(t npm_bin_note)"
+
+print_section "$(t homebrew_bin_section)"
+list_dir_names "/opt/homebrew/bin"
+print_note "$(t homebrew_bin_note)"
+
+print_section "$(t brew_formulas)"
+if command -v brew >/dev/null 2>&1; then
+  brew list --formula --versions 2>/dev/null || printf '%s\n' "$(t brew_failed)"
+else
+  printf '%s\n' "$(t brew_missing)"
+fi
+print_note "$(t brew_formulas_note)"
+
+print_section "$(t npm_packages)"
+if command -v npm >/dev/null 2>&1; then
+  npm ls -g --depth=0 --prefix "$HOME/.npm-global" 2>/dev/null || printf '%s\n' "$(t npm_failed)"
+else
+  printf '%s\n' "$(t npm_missing)"
+fi
+print_note "$(t npm_packages_note)"
+
+print_section "$(t pip_packages)"
+if command -v python3 >/dev/null 2>&1; then
+  python3 -m pip list --user 2>/dev/null || printf '%s\n' "$(t pip_failed)"
+else
+  printf '%s\n' "$(t python_missing)"
+fi
+print_note "$(t pip_packages_note)"
+
+print_section "$(t path_entries)"
+printf '%s\n' "$PATH" | tr ':' '\n'
+print_note "$(t path_entries_note)"

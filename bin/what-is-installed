@@ -166,7 +166,7 @@ print_found_commands
 
 print_section "Homebrew 包"
 if command -v brew >/dev/null 2>&1; then
-  brew list --formula --versions 2>/dev/null || printf '%s\n' "brew list 失败"
+  HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula --versions 2>/dev/null || printf '%s\n' "brew list 失败"
 else
   printf '%s\n' "未找到 brew"
 fi

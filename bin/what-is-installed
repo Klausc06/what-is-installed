@@ -9,6 +9,7 @@ set -euo pipefail
 LANGUAGE=""
 SHOW_VERSION=false
 SCAN_ALL=false
+QUIET_MODE=false
 
 # ============================================================================
 # 扫描目录配置
@@ -49,6 +50,7 @@ Options:
   --lang zh|en   Output language. Supported: zh, en
   --version      Show version info for discovered commands
   --all          Scan extended directories (cargo, go, pipx, conda, etc.)
+  --quiet        Only show scan results, no notes/comments
   --help, -h     Show this help message
 EOF
 }
@@ -66,6 +68,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --all)
       SCAN_ALL=true
+      shift
+      ;;
+    --quiet)
+      QUIET_MODE=true
       shift
       ;;
     --help|-h)
@@ -216,6 +222,7 @@ print_kvv() {
 }
 
 print_note() {
+  [[ "$QUIET_MODE" == true ]] && return
   printf '%s\n' "$1"
 }
 
@@ -473,17 +480,19 @@ print_section "$(t found_commands)"
 print_found_commands_flat
 print_note "$(t found_commands_note)"
 
-print_section "$(t local_bin_section)"
-list_dir_names "$HOME/.local/bin"
-print_note "$(t local_bin_note)"
+if [[ "$QUIET_MODE" != true ]]; then
+  print_section "$(t local_bin_section)"
+  list_dir_names "$HOME/.local/bin"
+  print_note "$(t local_bin_note)"
 
-print_section "$(t npm_bin_section)"
-list_dir_names "$HOME/.npm-global/bin"
-print_note "$(t npm_bin_note)"
+  print_section "$(t npm_bin_section)"
+  list_dir_names "$HOME/.npm-global/bin"
+  print_note "$(t npm_bin_note)"
 
-print_section "$(t homebrew_bin_section)"
-list_dir_names "/opt/homebrew/bin"
-print_note "$(t homebrew_bin_note)"
+  print_section "$(t homebrew_bin_section)"
+  list_dir_names "/opt/homebrew/bin"
+  print_note "$(t homebrew_bin_note)"
+fi
 
 print_section "$(t brew_formulas)"
 if command -v brew >/dev/null 2>&1; then
@@ -509,6 +518,8 @@ else
 fi
 print_note "$(t pip_packages_note)"
 
-print_section "$(t path_entries)"
-printf '%s\n' "$PATH" | tr ':' '\n'
-print_note "$(t path_entries_note)"
+if [[ "$QUIET_MODE" != true ]]; then
+  print_section "$(t path_entries)"
+  printf '%s\n' "$PATH" | tr ':' '\n'
+  print_note "$(t path_entries_note)"
+fi

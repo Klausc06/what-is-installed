@@ -37,6 +37,7 @@ It is designed to stay readable:
   - `--lang en`
   - `--version` (show command versions)
   - `--all` (extended directory scan)
+  - `--quiet` (only show results, no notes)
 - auto-detects Chinese when `LANG` or `LC_ALL` starts with `zh`
 - cross-platform: works on macOS and Linux (with or without `timeout`/`gtimeout`)
 
@@ -49,6 +50,8 @@ It is designed to stay readable:
 ./bin/what-is-installed --version          # show version info for each command
 ./bin/what-is-installed --all              # scan extended directories
 ./bin/what-is-installed --all --version    # combine both
+./bin/what-is-installed --quiet            # only show results, no notes
+./bin/what-is-installed --quiet --version  # clean output with versions
 ```
 
 ## Examples
@@ -77,28 +80,35 @@ brew               5.1.5          /opt/homebrew/bin/brew
 gh                 2.89.0         /opt/homebrew/bin/gh
 ```
 
-### Extended scan (`--all`)
+### Quiet mode (`--quiet`)
 
 ```text
-[Quick Summary]
-local bin        /Users/you/.local/bin
-npm global       /Users/you/.npm-global/bin
-homebrew         /opt/homebrew/bin
-Note: These usually map to user-installed commands, npm global commands, and Homebrew commands.
-Extended scan mode enabled, including more install directories.
+[概览]
+用户命令目录 /Users/you/.local/bin
+npm 全局目录  /Users/you/.npm-global/bin
+Homebrew 目录 /opt/homebrew/bin
 
-[Found Commands]
-python3.11       /Users/you/.local/bin/python3.11
-...
-docker           /usr/local/bin/docker
-kubectl          /usr/local/bin/kubectl
-node             /usr/local/bin/node
+[已发现的命令]
+python3.11         3.11.15        /Users/you/.local/bin/python3.11
+uv                 0.11.8         /Users/you/.local/bin/uv
+brew               5.1.5          /opt/homebrew/bin/brew
+gh                 2.89.0         /opt/homebrew/bin/gh
+
+[Homebrew 包]
+gh 2.89.0
+
+[npm 全局包]
+/Users/you/.npm-global/lib
+└── (empty)
+
+[pip 用户包]
 ```
 
 ## Notes
 
 - This tool is intentionally conservative. It only scans a few common install locations by default.
 - Use `--all` to scan extended directories (cargo, go, pipx, conda, mise, asdf, pnpm, etc.).
+- Use `--quiet` to hide all notes and comments, showing only scan results.
 - Version detection tries `--version` first, then `-V`, with a 1-second timeout per command.
 - `PATH` output may still include stale directories even when the commands are already gone.
 

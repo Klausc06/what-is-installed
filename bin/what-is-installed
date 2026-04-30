@@ -128,18 +128,7 @@ while IFS= read -r dir; do
     fi
     [[ "$found" == true ]] && continue
 
-    # 2. 版本号后缀入口：python3.14 → 已有 python3 则跳过
-    base="${name%.*}"
-    if [[ "$base" != "$name" ]]; then
-      suffix="${name##*.}"
-      if [[ "$suffix" =~ ^[0-9]+$ ]] && [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
-        for seen in "${SEEN_NAMES[@]}"; do
-          [[ "$seen" == "$base" ]] && continue 2
-        done
-      fi
-    fi
-
-    # 3. 同家族前缀（最后一个 - 之前）+ 同版本 → 变体去重
+    # 2. 同家族前缀（最后一个 - 之前）+ 同版本 → 变体去重
     # 如 docker-credential-desktop 0.9.5 → osxkeychain 跳过
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family=""
@@ -159,7 +148,7 @@ while IFS= read -r dir; do
       [[ "$skip_family" == true ]] && continue
     fi
 
-    # 4. 通用变体后缀
+    # 3. 通用变体后缀
     [[ "$name" == *-intel64 ]] && continue
     [[ "$name" == *-config ]] && continue
     [[ "$name" == *.py ]] && continue

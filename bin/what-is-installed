@@ -53,7 +53,7 @@ get_command_version() {
 
   for i in "${!VERSION_CACHE_NAMES[@]}"; do
     if [[ "${VERSION_CACHE_NAMES[$i]}" == "$cmd" ]]; then
-      printf '%s' "${VERSION_CACHE_VALS[$i]}"
+      VERSION_RESULT="${VERSION_CACHE_VALS[$i]}"
       return
     fi
   done
@@ -81,7 +81,7 @@ get_command_version() {
 
   VERSION_CACHE_NAMES+=("$cmd")
   VERSION_CACHE_VALS+=("$result")
-  printf '%s' "$result"
+  VERSION_RESULT="$result"
 }
 
 # ============================================================================
@@ -91,7 +91,10 @@ get_command_version() {
 printf '\n'
 
 # 去重：同名命令只显示第一次出现的位置
+# 去重：同名命令只显示第一次出现的位置
 SEEN_NAMES=("")
+SEEN_FAMILIES=("")  # 与 SEEN_NAMES 平行，存家族前缀（最后一个 - 之前的部分）
+SEEN_VERSIONS=()
 
 # 收集非系统目录 → 分组输出
 while IFS= read -r dir; do
@@ -108,27 +111,62 @@ while IFS= read -r dir; do
   # 逐条输出
   while IFS= read -r path; do
     name="$(basename "$path")"
-    version_str="$(get_command_version "$name")"
+    get_command_version "$name"
+    version_str="$VERSION_RESULT"
 
     # 跳过没有版本信息的辅助脚本
     [[ "$version_str" == "-" ]] && continue
 
-    # 跳过冗余入口（通用规则，所有人适用）
-    [[ "$name" == *-intel64 ]] && continue      # python3-intel64, etc.
-    [[ "$name" == *-config ]] && continue       # python3-config, numpy-config, etc.
-    [[ "$name" == *.py ]] && continue           # dumppdf.py, pdf2txt.py, etc.
-    [[ "$name" == python[0-9].[0-9]* ]] && continue  # python3.14 (keep python3)
-    [[ "$name" == pip[0-9].[0-9]* ]] && continue     # pip3.14 (keep pip3)
-    [[ "$name" == pydoc[0-9].[0-9]* ]] && continue   # pydoc3.14 (keep pydoc3)
-    [[ "$name" == docker-credential-osxkeychain ]] && continue  # dup of desktop
+    # === 以下过滤全部使用已显示的记录，当前命令尚未添加到数组 ===
 
-    # 去重：同名命令只显示第一次
+    # 1. 同名去重
     found=false
-    for seen in "${SEEN_NAMES[@]}"; do
-      [[ "$seen" == "$name" ]] && { found=true; break; }
-    done
+    if [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
+      for seen in "${SEEN_NAMES[@]}"; do
+        [[ "$seen" == "$name" ]] && { found=true; break; }
+      done
+    fi
     [[ "$found" == true ]] && continue
+
+    # 2. 版本号后缀入口：python3.14 → 已有 python3 则跳过
+    base="${name%.*}"
+    if [[ "$base" != "$name" ]]; then
+      suffix="${name##*.}"
+      if [[ "$suffix" =~ ^[0-9]+$ ]] && [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
+        for seen in "${SEEN_NAMES[@]}"; do
+          [[ "$seen" == "$base" ]] && continue 2
+        done
+      fi
+    fi
+
+    # 3. 同家族前缀（最后一个 - 之前）+ 同版本 → 变体去重
+    # 如 docker-credential-desktop 0.9.5 → osxkeychain 跳过
+    family="${name%-*}"
+    [[ "$family" == "$name" ]] && family=""
+    if [[ -n "$family" ]]; then
+      skip_family=false
+      for fi in "${!SEEN_FAMILIES[@]}"; do
+        sf="${SEEN_FAMILIES[$fi]}"
+        sn="${SEEN_NAMES[$fi]}"
+        [[ -z "$sf" || "$sf" != "$family" ]] && continue
+        for ci in "${!VERSION_CACHE_NAMES[@]}"; do
+          if [[ "${VERSION_CACHE_NAMES[$ci]}" == "$sn" ]]; then
+            [[ "${VERSION_CACHE_VALS[$ci]}" == "$version_str" ]] && { skip_family=true; break 2; }
+            break
+          fi
+        done
+      done
+      [[ "$skip_family" == true ]] && continue
+    fi
+
+    # 4. 通用变体后缀
+    [[ "$name" == *-intel64 ]] && continue
+    [[ "$name" == *-config ]] && continue
+    [[ "$name" == *.py ]] && continue
+
+    # === 通过所有过滤，加入已显示记录 ===
     SEEN_NAMES+=("$name")
+    SEEN_FAMILIES+=("$family")
 
     if [[ "$section_header_printed" == false ]]; then
       case "$dir" in

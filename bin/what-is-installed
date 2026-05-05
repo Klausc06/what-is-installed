@@ -2,12 +2,7 @@
 set -euo pipefail
 
 # what-is-installed — 命令行工具扫描器
-#
 # 扫描 $PATH 中所有目录，展示实际可用的命令及其版本
-
-# ============================================================================
-# 参数解析
-# ============================================================================
 
 usage() {
   cat <<'EOF'
@@ -20,56 +15,34 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --help|-h)
-      usage
-      exit 0
-      ;;
-    *)
-      printf 'Unknown option: %s\n' "$1" >&2
-      usage >&2
-      exit 1
-      ;;
+    --help|-h) usage; exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
-# ============================================================================
-# 输出辅助函数
-# ============================================================================
+print_kvv() { printf '%-18s %-14s %s\n' "$1" "$2" "$3"; }
 
-print_kvv() {
-  printf '%-18s %-14s %s\n' "$1" "$2" "$3"
-}
-
-# ============================================================================
-# 版本获取
-# ============================================================================
-
-VERSION_CACHE_NAMES=()
-VERSION_CACHE_VALS=()
+# 版本缓存（并行数组，兼容 bash 3.2）
+CACHE_NAMES=("")
+CACHE_VALS=("")
 
 get_command_version() {
   local cmd="$1"
   local i
-
-  for i in "${!VERSION_CACHE_NAMES[@]}"; do
-    if [[ "${VERSION_CACHE_NAMES[$i]}" == "$cmd" ]]; then
-      VERSION_RESULT="${VERSION_CACHE_VALS[$i]}"
-      return
-    fi
+  for i in "${!CACHE_NAMES[@]}"; do
+    [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
   done
 
-  local version_output="" exit_code=0
-
-  version_output="$("$cmd" --version 2>/dev/null)" || {
-    version_output="$("$cmd" -V 2>/dev/null)" || exit_code=$?
+  local output exit_code=0
+  output="$("$cmd" --version 2>/dev/null)" || {
+    output="$("$cmd" -V 2>/dev/null)" || exit_code=$?
   }
 
-  local result="" first_line
-  if [[ $exit_code -ne 0 ]] || [[ -z "$version_output" ]]; then
+  local result
+  if [[ $exit_code -ne 0 || -z "$output" ]]; then
     result="-"
   else
-    first_line="${version_output%%$'\n'*}"
-
+    local first_line="${output%%$'\n'*}"
     if [[ "$first_line" =~ ([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
       result="${BASH_REMATCH[1]}"
     elif [[ "$first_line" =~ [Vv]ersion[[:space:]]*([0-9]+(\.[0-9]+)*) ]]; then
@@ -79,99 +52,76 @@ get_command_version() {
     fi
   fi
 
-  VERSION_CACHE_NAMES+=("$cmd")
-  VERSION_CACHE_VALS+=("$result")
+  CACHE_NAMES+=("$cmd")
+  CACHE_VALS+=("$result")
   VERSION_RESULT="$result"
 }
 
-# ============================================================================
-# 输出
-# ============================================================================
-
 printf '\n'
 
-# 去重：同名命令只显示第一次出现的位置
-# 去重：同名命令只显示第一次出现的位置
+# 去重追踪（并行数组，兼容 bash 3.2）
 SEEN_NAMES=("")
-SEEN_FAMILIES=("")  # 与 SEEN_NAMES 平行，存家族前缀（最后一个 - 之前的部分）
-SEEN_VERSIONS=()
+SEEN_FAMILIES=("")
+SEEN_VERSIONS=("")
 
-# 收集非系统目录 → 分组输出
+system_dirs='^(/bin|/sbin|/usr/bin|/usr/sbin|/System/|/Library/Apple/)'
+
 while IFS= read -r dir; do
-  [[ "$dir" == /bin || "$dir" == /sbin || "$dir" == /usr/bin || "$dir" == /usr/sbin || "$dir" == /System/* || "$dir" == /Library/Apple/* ]] && continue
-  [[ -z "$dir" || ! -d "$dir" ]] && continue
+  [[ "$dir" =~ $system_dirs || -z "$dir" || ! -d "$dir" ]] && continue
 
-  # 收集该目录下的命令
-  paths="$(find "$dir" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -perm -111 2>/dev/null | sort -u)"
-  [[ -z "$paths" ]] && continue
+  section_printed=false
 
-  # 分类标题 - 延迟到找到第一条有效命令才打印
-  section_header_printed=false
+  # glob 替代 find，避免每个目录 spawn 子进程
+  for path in "$dir"/*; do
+    [[ -f "$path" || -L "$path" ]] || continue
+    [[ -x "$path" ]] || continue
 
-  # 逐条输出
-  while IFS= read -r path; do
-    name="$(basename "$path")"
+    name="${path##*/}"
+
     get_command_version "$name"
-    version_str="$VERSION_RESULT"
-
-    # 跳过没有版本信息的辅助脚本
-    [[ "$version_str" == "-" ]] && continue
-
-    # === 以下过滤全部使用已显示的记录，当前命令尚未添加到数组 ===
+    ver="$VERSION_RESULT"
+    [[ "$ver" == "-" ]] && continue
 
     # 1. 同名去重
     found=false
-    if [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
-      for seen in "${SEEN_NAMES[@]}"; do
-        [[ "$seen" == "$name" ]] && { found=true; break; }
-      done
-    fi
+    for seen in "${SEEN_NAMES[@]}"; do
+      [[ "$seen" == "$name" ]] && { found=true; break; }
+    done
     [[ "$found" == true ]] && continue
 
-    # 2. 同家族前缀（最后一个 - 之前）+ 同版本 → 变体去重
-    # 如 docker-credential-desktop 0.9.5 → osxkeychain 跳过
+    # 2. 同家族前缀 + 同版本 → 变体去重
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family=""
     if [[ -n "$family" ]]; then
-      skip_family=false
-      for fi in "${!SEEN_FAMILIES[@]}"; do
-        sf="${SEEN_FAMILIES[$fi]}"
-        sn="${SEEN_NAMES[$fi]}"
-        [[ -z "$sf" || "$sf" != "$family" ]] && continue
-        for ci in "${!VERSION_CACHE_NAMES[@]}"; do
-          if [[ "${VERSION_CACHE_NAMES[$ci]}" == "$sn" ]]; then
-            [[ "${VERSION_CACHE_VALS[$ci]}" == "$version_str" ]] && { skip_family=true; break 2; }
-            break
-          fi
-        done
+      skip=false
+      for j in "${!SEEN_FAMILIES[@]}"; do
+        [[ "${SEEN_FAMILIES[$j]}" == "$family" && "${SEEN_VERSIONS[$j]}" == "$ver" ]] && { skip=true; break; }
       done
-      [[ "$skip_family" == true ]] && continue
+      [[ "$skip" == true ]] && continue
     fi
 
-    # 3. 通用变体后缀
-    [[ "$name" == *-intel64 ]] && continue
-    [[ "$name" == *-config ]] && continue
-    [[ "$name" == *.py ]] && continue
+    # 3. 通用变体/辅助文件
+    case "$name" in
+      *-intel64|*-arm64|*-config|*.py) continue ;;
+    esac
 
-    # === 通过所有过滤，加入已显示记录 ===
     SEEN_NAMES+=("$name")
-    SEEN_FAMILIES+=("$family")
+    [[ -n "$family" ]] && { SEEN_FAMILIES+=("$family"); SEEN_VERSIONS+=("$ver"); }
 
-    if [[ "$section_header_printed" == false ]]; then
+    if [[ "$section_printed" == false ]]; then
       case "$dir" in
         */.local/bin)        printf '[User Local]\n' ;;
         */.npm-global/bin)   printf '[npm Global]\n' ;;
         /opt/homebrew/bin)   printf '[Homebrew]\n' ;;
         */Library/Frameworks/Python.framework/*/bin) printf '[Python Framework]\n' ;;
-        */usr/local/bin)     printf '[System Local]\n' ;;
-        */usr/local/sbin)    printf '[System Local]\n' ;;
+        */usr/local/bin|*/usr/local/sbin) printf '[System Local]\n' ;;
         *)                   printf '[Other]\n' ;;
       esac
-      section_header_printed=true
+      section_printed=true
     fi
 
-    print_kvv "$name" "$version_str" "$path"
-  done <<< "$paths"
+    print_kvv "$name" "$ver" "$path"
+  done
 
-  [[ "$section_header_printed" == true ]] && printf '\n'
+  [[ "$section_printed" == true ]] && printf '\n'
 done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u)

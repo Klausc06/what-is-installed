@@ -10,25 +10,61 @@ Usage: what-is-installed [OPTIONS]
 
 Options:
   --help, -h     Show this help message
+  --no-color     Disable colored output
 EOF
 }
 
+# ── CLI flags ──────────────────────────────────────────────────
+NO_COLOR=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --help|-h) usage; exit 0 ;;
+    --no-color) NO_COLOR=1; shift ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
-print_kvv() { printf '%-18s %-14s %s\n' "$1" "$2" "$3"; }
+# ── ANSI colors ─────────────────────────────────────────────────
+if [[ -z "$NO_COLOR" && -t 1 ]]; then
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_DIM=$'\033[2m'
+  C_CYAN=$'\033[36m'
+  C_GREEN=$'\033[32m'
+  C_YELLOW=$'\033[33m'
+  C_BLUE=$'\033[34m'
+else
+  C_RESET='' C_BOLD='' C_DIM='' C_CYAN='' C_GREEN='' C_YELLOW='' C_BLUE=''
+fi
 
-# 版本缓存（并行数组，兼容 bash 3.2）
+# ── Box-drawing glyphs ──────────────────────────────────────────
+B_TL='┌' B_TR='┐' B_BL='└' B_BR='┘'
+B_H='─'  B_V='│' B_CL='├' B_CR='┤'
+B_CM='┼' B_BM='┴'  # mid: cross, bottom: up-T
+
+# ── Helpers ─────────────────────────────────────────────────────
+short_path() {
+  local p="$1"
+  p="${p/#$HOME/~}"
+  [[ ${#p} -gt 45 ]] && p="…${p: -44}"
+  printf '%s' "$p"
+}
+
+repeat_char() {
+  local char="$1" count="$2" out=""
+  while [[ $count -gt 0 ]]; do
+    out+="$char"
+    ((count--))
+  done
+  printf '%s' "$out"
+}
+
+# ── Version cache ───────────────────────────────────────────────
 CACHE_NAMES=("")
 CACHE_VALS=("")
 
 get_command_version() {
-  local cmd="$1"
-  local i
+  local cmd="$1" i
   for i in "${!CACHE_NAMES[@]}"; do
     [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
   done
@@ -57,21 +93,59 @@ get_command_version() {
   VERSION_RESULT="$result"
 }
 
-printf '\n'
-
-# 去重追踪（并行数组，兼容 bash 3.2）
+# ── Dedup tracking ──────────────────────────────────────────────
 SEEN_NAMES=("")
 SEEN_FAMILIES=("")
 SEEN_VERSIONS=("")
 
+# ── Section label resolver ──────────────────────────────────────
+section_label() {
+  case "$1" in
+    */.local/bin)        printf 'User Local' ;;
+    */.npm-global/bin)   printf 'npm Global' ;;
+    /opt/homebrew/bin)   printf 'Homebrew' ;;
+    */Library/Frameworks/Python.framework/*/bin) printf 'Python Framework' ;;
+    */usr/local/bin|*/usr/local/sbin) printf 'System Local' ;;
+    *)                   printf 'Other' ;;
+  esac
+}
+
+section_color() {
+  case "$1" in
+    'User Local')       printf '%s%s' "$C_GREEN" "$C_BOLD" ;;
+    'npm Global')        printf '%s%s' "$C_YELLOW" "$C_BOLD" ;;
+    'Homebrew')          printf '%s%s' "$C_CYAN" "$C_BOLD" ;;
+    'Python Framework')  printf '%s%s' "$C_BLUE" "$C_BOLD" ;;
+    'System Local')      printf '%s%s' "$C_DIM" "$C_BOLD" ;;
+    *)                   printf '%s%s' "$C_RESET" "$C_BOLD" ;;
+  esac
+}
+
+# ── Version color ───────────────────────────────────────────────
+ver_color() {
+  if [[ "$1" =~ ^[0-9]+\.[0-9]+ ]]; then
+    printf '%s' "$C_GREEN"
+  else
+    printf '%s' "$C_YELLOW"
+  fi
+}
+
+# ── Scan & collect ──────────────────────────────────────────────
 system_dirs='^(/bin|/sbin|/usr/bin|/usr/sbin|/System/|/Library/Apple/)'
+
+ALL_SECTION_DIRS=()
+ALL_SECTION_ITEMS=()
+ALL_SECTION_COUNTS=()
+ALL_SECTION_START=()
 
 while IFS= read -r dir; do
   [[ "$dir" =~ $system_dirs || -z "$dir" || ! -d "$dir" ]] && continue
 
-  section_printed=false
+  label="$(section_label "$dir")"
+  section_items_before=${#ALL_SECTION_ITEMS[@]}
+  has_items=false
+  name= ver= found= family= skip= j=
 
-  # glob 替代 find，避免每个目录 spawn 子进程
   for path in "$dir"/*; do
     [[ -f "$path" || -L "$path" ]] || continue
     [[ -x "$path" ]] || continue
@@ -108,20 +182,111 @@ while IFS= read -r dir; do
     SEEN_NAMES+=("$name")
     [[ -n "$family" ]] && { SEEN_FAMILIES+=("$family"); SEEN_VERSIONS+=("$ver"); }
 
-    if [[ "$section_printed" == false ]]; then
-      case "$dir" in
-        */.local/bin)        printf '[User Local]\n' ;;
-        */.npm-global/bin)   printf '[npm Global]\n' ;;
-        /opt/homebrew/bin)   printf '[Homebrew]\n' ;;
-        */Library/Frameworks/Python.framework/*/bin) printf '[Python Framework]\n' ;;
-        */usr/local/bin|*/usr/local/sbin) printf '[System Local]\n' ;;
-        *)                   printf '[Other]\n' ;;
-      esac
-      section_printed=true
-    fi
-
-    print_kvv "$name" "$ver" "$path"
+    ALL_SECTION_ITEMS+=("$name|$ver|$path")
+    has_items=true
   done
 
-  [[ "$section_printed" == true ]] && printf '\n'
+  if [[ "$has_items" == true ]]; then
+    count=$(( ${#ALL_SECTION_ITEMS[@]} - section_items_before ))
+    ALL_SECTION_DIRS+=("$label")
+    ALL_SECTION_START+=("$section_items_before")
+    ALL_SECTION_COUNTS+=("$count")
+  fi
 done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u)
+
+# ── Render ──────────────────────────────────────────────────────
+terminal_width() { tput cols 2>/dev/null || printf 80; }
+MAX_WIDTH=$(terminal_width)
+[[ $MAX_WIDTH -gt 120 ]] && MAX_WIDTH=120
+
+num_sections=${#ALL_SECTION_DIRS[@]}
+if [[ $num_sections -eq 0 ]]; then
+  printf '\n  %sNo tools found in non-system PATH directories.%s\n\n' "$C_DIM" "$C_RESET"
+  exit 0
+fi
+
+printf '\n'
+
+for si in "${!ALL_SECTION_DIRS[@]}"; do
+  label="${ALL_SECTION_DIRS[$si]}"
+  start="${ALL_SECTION_START[$si]}"
+  count="${ALL_SECTION_COUNTS[$si]}"
+
+  # Calculate column widths
+  max_name=4
+  max_ver=7
+  max_path=4
+
+  for ((j = start; j < start + count; j++)); do
+    entry="${ALL_SECTION_ITEMS[$j]}"
+    IFS='|' read -r ename ever epath <<< "$entry"
+    [[ ${#ename} -gt $max_name ]] && max_name=${#ename}
+    [[ ${#ever}  -gt $max_ver  ]] && max_ver=${#ever}
+    sp="$(short_path "$epath")"
+    [[ ${#sp} -gt $max_path ]] && max_path=${#sp}
+  done
+
+  table_width=$(( 2 + max_name + 3 + max_ver + 3 + max_path + 2 ))
+
+  # Section header
+  scolor="$(section_color "$label")"
+  header_text=" $label "
+  header_len=${#header_text}
+  pad_left=$(( (table_width - header_len) / 2 ))
+  pad_right=$(( table_width - header_len - pad_left ))
+
+  printf '%s' "$C_DIM"
+  printf '%s%s%s%s%s%s\n' \
+    "$B_TL" \
+    "$(repeat_char "$B_H" "$pad_left")" \
+    "$scolor$header_text$C_DIM" \
+    "$(repeat_char "$B_H" "$pad_right")" \
+    "$B_TR" \
+    "$C_RESET"
+
+  # Column header
+  printf '%s' "$C_DIM$B_V$C_RESET "
+  printf '%s%-*s%s' "$C_BOLD" "$max_name" "Name" "$C_RESET"
+  printf ' %s ' "$C_DIM$B_V$C_RESET"
+  printf '%s%-*s%s' "$C_BOLD" "$max_ver" "Version" "$C_RESET"
+  printf ' %s ' "$C_DIM$B_V$C_RESET"
+  printf '%-*s' "$max_path" "Path"
+  printf ' %s\n' "$C_DIM$B_V$C_RESET"
+
+  # Separator
+  printf '%s%s%s%s%s%s%s%s%s%s\n' \
+    "$C_DIM$B_CL" \
+    "$(repeat_char "$B_H" $((max_name + 1)))" \
+    "$B_CM" \
+    "$(repeat_char "$B_H" $((max_ver + 1)))" \
+    "$B_CM" \
+    "$(repeat_char "$B_H" $((max_path + 1)))" \
+    "$B_CR$C_RESET"
+
+  # Data rows
+  for ((j = start; j < start + count; j++)); do
+    entry="${ALL_SECTION_ITEMS[$j]}"
+    IFS='|' read -r ename ever epath <<< "$entry"
+    sp="$(short_path "$epath")"
+
+    printf '%s ' "$C_DIM$B_V$C_RESET"
+    printf '%s%-*s%s' "$C_BOLD" "$max_name" "$ename" "$C_RESET"
+    printf ' %s ' "$C_DIM$B_V$C_RESET"
+    printf '%s%-*s%s' "$(ver_color "$ever")" "$max_ver" "$ever" "$C_RESET"
+    printf ' %s ' "$C_DIM$B_V$C_RESET"
+    printf '%s%-*s%s' "$C_DIM" "$max_path" "$sp" "$C_RESET"
+    printf ' %s\n' "$C_DIM$B_V$C_RESET"
+  done
+
+  # Footer
+  printf '%s%s%s%s%s%s%s%s%s%s\n' \
+    "$C_DIM$B_BL" \
+    "$(repeat_char "$B_H" $((max_name + 1)))" \
+    "$B_BM" \
+    "$(repeat_char "$B_H" $((max_ver + 1)))" \
+    "$B_BM" \
+    "$(repeat_char "$B_H" $((max_path + 1)))" \
+    "$B_BR$C_RESET"
+
+  printf '\n'
+done

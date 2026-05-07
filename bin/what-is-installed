@@ -125,17 +125,11 @@ get_command_version() {
   env_prefix="$(get_accel_env "$cmd")"
 
   if [[ -n "$env_prefix" ]]; then
-    output="$(run_with_timeout 1 env $env_prefix "$cmd" --version)"
-    local probe_exit=$?
-    if [[ $probe_exit -ne 0 ]]; then
-      [[ $probe_exit -eq 124 ]] && output="" || output="$(run_with_timeout 1 env $env_prefix "$cmd" -V)" || true
-    fi
+    output="$(run_with_timeout 1 env $env_prefix "$cmd" --version)" || true
+    [[ -z "$output" ]] && output="$(run_with_timeout 1 env $env_prefix "$cmd" -V)" || true
   else
-    output="$(run_with_timeout 1 "$cmd" --version)"
-    local probe_exit=$?
-    if [[ $probe_exit -ne 0 ]]; then
-      [[ $probe_exit -eq 124 ]] && output="" || output="$(run_with_timeout 1 "$cmd" -V)" || true
-    fi
+    output="$(run_with_timeout 1 "$cmd" --version)" || true
+    [[ -z "$output" ]] && output="$(run_with_timeout 1 "$cmd" -V)" || true
   fi
 
   local result

@@ -128,8 +128,8 @@ get_command_version() {
     output="$(run_with_timeout 1 env $env_prefix "$cmd" --version)" || true
     [[ -z "$output" ]] && output="$(run_with_timeout 1 env $env_prefix "$cmd" -V)" || true
   else
-    output="$(run_with_timeout 1 "$cmd" --version)" || true
-    [[ -z "$output" ]] && output="$(run_with_timeout 1 "$cmd" -V)" || true
+    output="$("$cmd" --version 2>/dev/null)" || true
+    [[ -z "$output" ]] && output="$("$cmd" -V 2>/dev/null)" || true
   fi
 
   local result

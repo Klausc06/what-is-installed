@@ -46,7 +46,6 @@ B_CM='┼' B_BM='┴'  # mid: cross, bottom: up-T
 short_path() {
   local p="$1"
   p="${p/#$HOME/~}"
-  [[ ${#p} -gt 45 ]] && p="…${p: -44}"
   printf '%s' "$p"
 }
 

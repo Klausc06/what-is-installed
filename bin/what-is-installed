@@ -1,48 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# what-is-installed — 命令行工具扫描器
-# 扫描 $PATH 中所有目录，展示实际可用的命令及其版本
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../lib/platform.sh"
+source "$SCRIPT_DIR/../lib/render.sh"
 
 usage() {
   cat <<'EOF'
 Usage: what-is-installed [OPTIONS]
 
+Scan $PATH directories and show available command-line tools with versions.
+
 Options:
-  --help, -h     Show this help message
-  --no-color     Disable colored output
+  --help, -h              Show this help message and exit
+  --no-color              Disable colored output
+  --json                  Output as JSON
+  --csv                   Output as CSV
+  --plain                 Output as plain text (no box drawing)
+  --ascii                 Use ASCII characters for box drawing
+  --filter <pattern>      Only show commands matching pattern (fuzzy, case-insensitive)
+  --sort <field>          Sort by: name, version, path (default: name)
+  --no-cache              Skip file cache, always do fresh version probing
+  --include-system, -a    Include system directories in scan
 EOF
 }
 
-# ── CLI flags ──────────────────────────────────────────────────
 NO_COLOR=""
+ASCII_MODE=""
+OUTPUT_FORMAT="table"
+FILTER=""
+SORT_FIELD=""
+NO_CACHE=""
+INCLUDE_SYSTEM=""
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --help|-h) usage; exit 0 ;;
-    --no-color) NO_COLOR=1; shift ;;
-    *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
+    --help|-h)            usage; exit 0 ;;
+    --no-color)           NO_COLOR=1; shift ;;
+    --json)               OUTPUT_FORMAT="json"; shift ;;
+    --csv)                OUTPUT_FORMAT="csv"; shift ;;
+    --plain)              OUTPUT_FORMAT="plain"; shift ;;
+    --ascii)              ASCII_MODE=1; shift ;;
+    --filter)             FILTER="$2"; shift 2 ;;
+    --sort)               SORT_FIELD="$2"; shift 2 ;;
+    --no-cache)           NO_CACHE=1; shift ;;
+    --include-system|-a)  INCLUDE_SYSTEM=1; shift ;;
+    *)                    printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
-# ── ANSI colors ─────────────────────────────────────────────────
-if [[ -z "$NO_COLOR" && -t 1 ]]; then
-  C_RESET=$'\033[0m'
-  C_BOLD=$'\033[1m'
-  C_DIM=$'\033[2m'
-  C_CYAN=$'\033[36m'
-  C_GREEN=$'\033[32m'
-  C_YELLOW=$'\033[33m'
-  C_BLUE=$'\033[34m'
-else
-  C_RESET='' C_BOLD='' C_DIM='' C_CYAN='' C_GREEN='' C_YELLOW='' C_BLUE=''
-fi
+setup_colors
+setup_glyphs
 
-# ── Box-drawing glyphs ──────────────────────────────────────────
-B_TL='┌' B_TR='┐' B_BL='└' B_BR='┘'
-B_H='─'  B_V='│' B_CL='├' B_CR='┤'
-B_CM='┼' B_BM='┴'  # mid: cross, bottom: up-T
+[[ -n "${C_MAGENTA:-}" ]] || C_MAGENTA="$C_RESET"
+[[ -n "${C_RED:-}" ]]    || C_RED="$C_RESET"
 
-# ── Helpers ─────────────────────────────────────────────────────
 short_path() {
   local p="$1"
   p="${p/#$HOME/~}"
@@ -58,32 +70,89 @@ repeat_char() {
   printf '%s' "$out"
 }
 
-# ── Version cache ───────────────────────────────────────────────
 CACHE_NAMES=("")
 CACHE_VALS=("")
 
+write_cache() {
+  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed"
+  mkdir -p "$cache_dir"
+  {
+    printf 'CACHE_TS=%s\n' "$(date +%s)"
+    declare -p CACHE_NAMES 2>/dev/null
+    declare -p CACHE_VALS 2>/dev/null
+  } > "$cache_dir/versions.cache"
+}
+
+load_cache() {
+  local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed/versions.cache"
+  [[ -f "$cache_file" ]] || return 1
+  local now
+  now=$(date +%s)
+  source "$cache_file" 2>/dev/null || return 1
+  [[ -n "${CACHE_TS:-}" && $(( now - CACHE_TS )) -lt 3600 ]] || return 1
+}
+
+run_with_timeout() {
+  local timeout="${1:-2}" tmpfile pid killer exit_code
+  shift
+  tmpfile="$(mktemp)"
+  "$@" >"$tmpfile" 2>/dev/null &
+  pid=$!
+  { sleep "$timeout"; kill "$pid" 2>/dev/null; } &
+  killer=$!
+  wait "$pid" 2>/dev/null
+  exit_code=$?
+  kill "$killer" 2>/dev/null
+  wait "$killer" 2>/dev/null
+  if [[ $exit_code -eq 143 || $exit_code -eq 137 ]]; then
+    rm -f "$tmpfile"
+    return 124
+  fi
+  cat "$tmpfile"
+  rm -f "$tmpfile"
+  return $exit_code
+}
+
+VERSION_RESULT=""
+
 get_command_version() {
-  local cmd="$1" i
+  local cmd="$1" env_prefix output first_line i
+
   for i in "${!CACHE_NAMES[@]}"; do
     [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
   done
 
-  local output exit_code=0
-  output="$("$cmd" --version 2>/dev/null)" || {
-    output="$("$cmd" -V 2>/dev/null)" || exit_code=$?
-  }
+  env_prefix="$(get_accel_env "$cmd")"
+
+  if [[ -n "$env_prefix" ]]; then
+    output="$(run_with_timeout 1 env $env_prefix "$cmd" --version)"
+    local probe_exit=$?
+    if [[ $probe_exit -ne 0 ]]; then
+      [[ $probe_exit -eq 124 ]] && output="" || output="$(run_with_timeout 1 env $env_prefix "$cmd" -V)" || true
+    fi
+  else
+    output="$(run_with_timeout 1 "$cmd" --version)"
+    local probe_exit=$?
+    if [[ $probe_exit -ne 0 ]]; then
+      [[ $probe_exit -eq 124 ]] && output="" || output="$(run_with_timeout 1 "$cmd" -V)" || true
+    fi
+  fi
 
   local result
-  if [[ $exit_code -ne 0 || -z "$output" ]]; then
+  if [[ -z "$output" ]]; then
     result="-"
   else
-    local first_line="${output%%$'\n'*}"
+    if ! printf '%s' "$output" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
+      output="$(printf '%s' "$output" | iconv -f latin1 -t utf-8 2>/dev/null || printf '%s' "$output")"
+    fi
+
+    first_line="${output%%$'\n'*}"
     if [[ "$first_line" =~ ([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
       result="${BASH_REMATCH[1]}"
     elif [[ "$first_line" =~ [Vv]ersion[[:space:]]*([0-9]+(\.[0-9]+)*) ]]; then
       result="${BASH_REMATCH[1]}"
     else
-      result="${first_line:0:30}"
+      result="-"
     fi
   fi
 
@@ -92,58 +161,30 @@ get_command_version() {
   VERSION_RESULT="$result"
 }
 
-# ── Dedup tracking ──────────────────────────────────────────────
+[[ -z "$NO_CACHE" ]] && { load_cache || true; }
+
 SEEN_NAMES=("")
 SEEN_FAMILIES=("")
 SEEN_VERSIONS=("")
-
-# ── Section label resolver ──────────────────────────────────────
-section_label() {
-  case "$1" in
-    */.local/bin)        printf 'User Local' ;;
-    */.npm-global/bin)   printf 'npm Global' ;;
-    /opt/homebrew/bin)   printf 'Homebrew' ;;
-    */Library/Frameworks/Python.framework/*/bin) printf 'Python Framework' ;;
-    */usr/local/bin|*/usr/local/sbin) printf 'System Local' ;;
-    *)                   printf 'Other' ;;
-  esac
-}
-
-section_color() {
-  case "$1" in
-    'User Local')       printf '%s%s' "$C_GREEN" "$C_BOLD" ;;
-    'npm Global')        printf '%s%s' "$C_YELLOW" "$C_BOLD" ;;
-    'Homebrew')          printf '%s%s' "$C_CYAN" "$C_BOLD" ;;
-    'Python Framework')  printf '%s%s' "$C_BLUE" "$C_BOLD" ;;
-    'System Local')      printf '%s%s' "$C_DIM" "$C_BOLD" ;;
-    *)                   printf '%s%s' "$C_RESET" "$C_BOLD" ;;
-  esac
-}
-
-# ── Version color ───────────────────────────────────────────────
-ver_color() {
-  if [[ "$1" =~ ^[0-9]+\.[0-9]+ ]]; then
-    printf '%s' "$C_GREEN"
-  else
-    printf '%s' "$C_YELLOW"
-  fi
-}
-
-# ── Scan & collect ──────────────────────────────────────────────
-system_dirs='^(/bin|/sbin|/usr/bin|/usr/sbin|/System/|/Library/Apple/)'
 
 ALL_SECTION_DIRS=()
 ALL_SECTION_ITEMS=()
 ALL_SECTION_COUNTS=()
 ALL_SECTION_START=()
 
+SYSTEM_DIRS="$(get_system_dirs)"
+FAMILY_SKIP="$(get_family_skip_patterns)"
+
 while IFS= read -r dir; do
-  [[ "$dir" =~ $system_dirs || -z "$dir" || ! -d "$dir" ]] && continue
+  if [[ -z "$INCLUDE_SYSTEM" ]]; then
+    [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
+  else
+    [[ -z "$dir" || ! -d "$dir" ]] && continue
+  fi
 
   label="$(section_label "$dir")"
   section_items_before=${#ALL_SECTION_ITEMS[@]}
   has_items=false
-  name= ver= found= family= skip= j=
 
   for path in "$dir"/*; do
     [[ -f "$path" || -L "$path" ]] || continue
@@ -151,18 +192,22 @@ while IFS= read -r dir; do
 
     name="${path##*/}"
 
+    if [[ -n "${FILTER:-}" ]]; then
+      name_lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
+      filter_lower="$(printf '%s' "$FILTER" | tr '[:upper:]' '[:lower:]')"
+      [[ "$name_lower" == *"$filter_lower"* ]] || continue
+    fi
+
     get_command_version "$name"
     ver="$VERSION_RESULT"
     [[ "$ver" == "-" ]] && continue
 
-    # 1. 同名去重
     found=false
     for seen in "${SEEN_NAMES[@]}"; do
       [[ "$seen" == "$name" ]] && { found=true; break; }
     done
     [[ "$found" == true ]] && continue
 
-    # 2. 同家族前缀 + 同版本 → 变体去重
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family=""
     if [[ -n "$family" ]]; then
@@ -173,9 +218,12 @@ while IFS= read -r dir; do
       [[ "$skip" == true ]] && continue
     fi
 
-    # 3. 通用变体/辅助文件
+    if [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]]; then
+      continue
+    fi
+
     case "$name" in
-      *-intel64|*-arm64|*-config|*.py) continue ;;
+      *-config|*.py) continue ;;
     esac
 
     SEEN_NAMES+=("$name")
@@ -193,99 +241,29 @@ while IFS= read -r dir; do
   fi
 done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u)
 
-# ── Render ──────────────────────────────────────────────────────
-terminal_width() { tput cols 2>/dev/null || printf 80; }
-MAX_WIDTH=$(terminal_width)
-[[ $MAX_WIDTH -gt 120 ]] && MAX_WIDTH=120
+if [[ -n "${SORT_FIELD:-}" && "$SORT_FIELD" != "name" ]]; then
+  for si in "${!ALL_SECTION_DIRS[@]}"; do
+    start="${ALL_SECTION_START[$si]}"
+    count="${ALL_SECTION_COUNTS[$si]}"
 
-num_sections=${#ALL_SECTION_DIRS[@]}
-if [[ $num_sections -eq 0 ]]; then
-  printf '\n  %sNo tools found in non-system PATH directories.%s\n\n' "$C_DIM" "$C_RESET"
-  exit 0
+    slice=()
+    for ((j = start; j < start + count; j++)); do
+      slice+=("${ALL_SECTION_ITEMS[$j]}")
+    done
+
+    sorted_slice=()
+    if [[ "$SORT_FIELD" == "version" ]]; then
+      IFS=$'\n' sorted_slice=($(printf '%s\n' "${slice[@]}" | sort -t'|' -k2,2 -V))
+    else
+      IFS=$'\n' sorted_slice=($(printf '%s\n' "${slice[@]}" | sort -t'|' -k3,3))
+    fi
+
+    for ((j = 0; j < count; j++)); do
+      ALL_SECTION_ITEMS[$((start + j))]="${sorted_slice[$j]}"
+    done
+  done
 fi
 
-printf '\n'
+[[ -z "$NO_CACHE" ]] && { write_cache || true; }
 
-for si in "${!ALL_SECTION_DIRS[@]}"; do
-  label="${ALL_SECTION_DIRS[$si]}"
-  start="${ALL_SECTION_START[$si]}"
-  count="${ALL_SECTION_COUNTS[$si]}"
-
-  # Calculate column widths
-  max_name=4
-  max_ver=7
-  max_path=4
-
-  for ((j = start; j < start + count; j++)); do
-    entry="${ALL_SECTION_ITEMS[$j]}"
-    IFS='|' read -r ename ever epath <<< "$entry"
-    [[ ${#ename} -gt $max_name ]] && max_name=${#ename}
-    [[ ${#ever}  -gt $max_ver  ]] && max_ver=${#ever}
-    sp="$(short_path "$epath")"
-    [[ ${#sp} -gt $max_path ]] && max_path=${#sp}
-  done
-
-  table_width=$(( 2 + max_name + 3 + max_ver + 3 + max_path + 2 ))
-
-  # Section header
-  scolor="$(section_color "$label")"
-  header_text=" $label "
-  header_len=${#header_text}
-  pad_left=$(( (table_width - header_len) / 2 ))
-  pad_right=$(( table_width - header_len - pad_left ))
-
-  printf '%s' "$C_DIM"
-  printf '%s%s%s%s%s%s\n' \
-    "$B_TL" \
-    "$(repeat_char "$B_H" "$pad_left")" \
-    "$scolor$header_text$C_DIM" \
-    "$(repeat_char "$B_H" "$pad_right")" \
-    "$B_TR" \
-    "$C_RESET"
-
-  # Column header
-  printf '%s' "$C_DIM$B_V$C_RESET "
-  printf '%s%-*s%s' "$C_BOLD" "$max_name" "Name" "$C_RESET"
-  printf ' %s ' "$C_DIM$B_V$C_RESET"
-  printf '%s%-*s%s' "$C_BOLD" "$max_ver" "Version" "$C_RESET"
-  printf ' %s ' "$C_DIM$B_V$C_RESET"
-  printf '%-*s' "$max_path" "Path"
-  printf ' %s\n' "$C_DIM$B_V$C_RESET"
-
-  # Separator
-  printf '%s%s%s%s%s%s%s%s%s%s\n' \
-    "$C_DIM$B_CL" \
-    "$(repeat_char "$B_H" $((max_name + 1)))" \
-    "$B_CM" \
-    "$(repeat_char "$B_H" $((max_ver + 1)))" \
-    "$B_CM" \
-    "$(repeat_char "$B_H" $((max_path + 1)))" \
-    "$B_CR$C_RESET"
-
-  # Data rows
-  for ((j = start; j < start + count; j++)); do
-    entry="${ALL_SECTION_ITEMS[$j]}"
-    IFS='|' read -r ename ever epath <<< "$entry"
-    sp="$(short_path "$epath")"
-
-    printf '%s ' "$C_DIM$B_V$C_RESET"
-    printf '%s%-*s%s' "$C_BOLD" "$max_name" "$ename" "$C_RESET"
-    printf ' %s ' "$C_DIM$B_V$C_RESET"
-    printf '%s%-*s%s' "$(ver_color "$ever")" "$max_ver" "$ever" "$C_RESET"
-    printf ' %s ' "$C_DIM$B_V$C_RESET"
-    printf '%s%-*s%s' "$C_DIM" "$max_path" "$sp" "$C_RESET"
-    printf ' %s\n' "$C_DIM$B_V$C_RESET"
-  done
-
-  # Footer
-  printf '%s%s%s%s%s%s%s%s%s%s\n' \
-    "$C_DIM$B_BL" \
-    "$(repeat_char "$B_H" $((max_name + 1)))" \
-    "$B_BM" \
-    "$(repeat_char "$B_H" $((max_ver + 1)))" \
-    "$B_BM" \
-    "$(repeat_char "$B_H" $((max_path + 1)))" \
-    "$B_BR$C_RESET"
-
-  printf '\n'
-done
+dispatch_render

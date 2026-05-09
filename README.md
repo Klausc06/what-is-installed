@@ -99,17 +99,17 @@ lib/render.sh             # Table/JSON/CSV/plain rendering, colors, cache escapi
 
 ## Built With
 
-Built with tools this project itself can inventory —
+This project was built across multiple AI coding agents working together —
+something `what-is-installed` itself would happily inventory.
 
-[Hermes](https://github.com/nousresearch/hermes-agent) ·
-[Claude Code](https://claude.ai) ·
-[Codex](https://github.com/openai/codex) ·
-[OpenCode](https://github.com/anthropics/opencode) ·
-[WorkBuddy](https://workbuddy.dev) ·
-[free-claude-code](https://github.com/Klausc06/free-claude-code) ·
-[DeepSeek](https://deepseek.com) ·
-[Homebrew](https://brew.sh) ·
-Bash
+- **[Hermes](https://github.com/nousresearch/hermes-agent)** — ran the full review cycle, caught the printf bug, cleaned up stale memory across sessions
+- **[Claude Code](https://claude.ai)** — did the heavy lifting on safety hardening: cache TSV parser, arg validation, PATH dedup rewrite
+- **[Codex](https://github.com/openai/codex)** — built the original cross-platform architecture and table rendering engine
+- **[DeepSeek](https://deepseek.com)** — powered most of the agent sessions behind the scenes
+- **[OpenCode](https://github.com/anthropics/opencode)** & **[WorkBuddy](https://workbuddy.dev)** — pair-programmed early iterations and design decisions
+- **[free-claude-code](https://github.com/Klausc06/free-claude-code)** — the proxy that made Claude Code sessions possible
+- **[Homebrew](https://brew.sh)** — the package manager this tool scans every day, and the first entry in every output table
+- **Bash 3.2** — the only runtime. No Python, no Node, no nothing. Just what shipped with your OS.
 
 ## License
 
@@ -212,17 +212,16 @@ lib/render.sh             # 表格/JSON/CSV/纯文本渲染、颜色、缓存转
 
 ## 致谢
 
-本项目由以下工具共同打造——
+这个项目由多个 AI 编程助手协作完成——`what-is-installed` 扫一遍 PATH 就能把它们全列出来。
 
-[Hermes](https://github.com/nousresearch/hermes-agent) ·
-[Claude Code](https://claude.ai) ·
-[Codex](https://github.com/openai/codex) ·
-[OpenCode](https://github.com/anthropics/opencode) ·
-[WorkBuddy](https://workbuddy.dev) ·
-[free-claude-code](https://github.com/Klausc06/free-claude-code) ·
-[DeepSeek](https://deepseek.com) ·
-[Homebrew](https://brew.sh) ·
-Bash
+- **[Hermes](https://github.com/nousresearch/hermes-agent)** — 主导完整审阅，抓出 printf bug，跨 session 清理脏记忆
+- **[Claude Code](https://claude.ai)** — 扛了安全加固的大头：缓存 TSV 解析器、参数校验、PATH 去重重写
+- **[Codex](https://github.com/openai/codex)** — 搭了最初的跨平台架构和表格渲染引擎
+- **[DeepSeek](https://deepseek.com)** — 幕后驱动了大部分 agent 会话
+- **[OpenCode](https://github.com/anthropics/opencode)** & **[WorkBuddy](https://workbuddy.dev)** — 早期迭代和设计决策的结对编程伙伴
+- **[free-claude-code](https://github.com/Klausc06/free-claude-code)** — 让 Claude Code 会话跑起来的代理层
+- **[Homebrew](https://brew.sh)** — 这个工具每天都在扫的包管理器，也是每张输出表的第一行
+- **Bash 3.2** — 唯一运行时。没 Python，没 Node，什么都没有。就你系统自带的东西。
 
 ## 许可证
 

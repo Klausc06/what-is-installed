@@ -123,6 +123,18 @@ Added MinGW/Cygwin/Git Bash support to `install.sh`:
 
 Now all three major platforms have Desktop launchers: .command (macOS), .desktop (Linux), .bat (Windows).
 
+### `92493f6` — fix: 12 bugs from 3-agent review (Hermes)
+
+Three sub-agents reviewed all code. 12 bugs fixed:
+- **bin/what-is-installed**: NO_COLOR env override, atomic cache, empty array init, nullglob, iconv guard, tr stderr
+- **render.sh**: table width alignment, C_RED dead code
+- **platform.sh**: Intel Mac Homebrew detection
+- **install.sh**: .desktop PATH, .profile fix
+- **install.ps1**: copy script instead of fragile path
+- **launchers**: .bat fallback priority, PATH in launcher, read -rp
+
+59 commits. Tests pass, shellcheck clean.
+
 ### `ace0767` — `376222f` — docs: Built With / 致谢 section
 
 Added acknowledgments section in both English and Chinese, listing all tools used:

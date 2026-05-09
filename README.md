@@ -27,6 +27,7 @@ No dependencies. Works on macOS, Linux, BSD, and Windows (MinGW/Cygwin). Zero-co
 ## Quick Install
 
 ```bash
+# Works in any Bash terminal: macOS Terminal, Linux shell, Git Bash on Windows
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
@@ -125,6 +126,7 @@ MIT
 ## 快速安装
 
 ```bash
+# 适用于任何 Bash 终端：macOS 终端、Linux shell、Windows Git Bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh

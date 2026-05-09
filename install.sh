@@ -87,17 +87,8 @@ DESKTOPEOF
     ;;
 
   windows)
-    # Create .bat launcher for double-click in Explorer.
-    # Git Bash / MinGW users can also run `what-is-installed` directly in terminal.
-    cat > "$DESKTOP/what-is-installed.bat" <<BATEOF
-@echo off
-chcp 65001 >nul 2>&1
-echo what-is-installed — scanning PATH...
-echo.
-bash -c "what-is-installed"
-echo.
-pause
-BATEOF
+    # Copy .bat launcher from repo template.
+    cp "$ROOT/launchers/what-is-installed.bat" "$DESKTOP/what-is-installed.bat"
     echo "  ✓  Desktop launcher → $DESKTOP/what-is-installed.bat"
     echo
     echo "  Double-click it in Explorer to run (requires Git Bash in PATH)."

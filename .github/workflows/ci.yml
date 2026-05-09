@@ -14,7 +14,13 @@ jobs:
       run:
         shell: bash
     steps:
+      - name: Prevent CRLF conversion
+        run: git config --global core.autocrlf false
+
       - uses: actions/checkout@v4
+
+      - name: Strip CR (safety net for CRLF)
+        run: sed -i 's/\r$//' bin/what-is-installed lib/platform.sh lib/render.sh install.sh tests/run.sh
 
       - name: Install shellcheck
         run: choco install shellcheck -y

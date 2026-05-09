@@ -27,12 +27,14 @@ No dependencies. Works on macOS, Linux, BSD, and Windows (MinGW/Cygwin). Zero-co
 ## Quick Install
 
 ```bash
-# Clone and symlink into PATH
 git clone https://github.com/Klausc06/what-is-installed.git
-ln -s "$(pwd)/what-is-installed/bin/what-is-installed" ~/.local/bin/what-is-installed
+cd what-is-installed
+./install.sh
 ```
 
-Or use the macOS Finder launcher: double-click `what-is-installed.command` on your Desktop.
+That's it. You'll get:
+- `what-is-installed` symlinked to `~/.local/bin/`
+- A double-clickable launcher on your Desktop (`what-is-installed.command`)
 
 ## Usage
 
@@ -120,12 +122,14 @@ MIT
 ## 快速安装
 
 ```bash
-# 克隆并软链接到 PATH
 git clone https://github.com/Klausc06/what-is-installed.git
-ln -s "$(pwd)/what-is-installed/bin/what-is-installed" ~/.local/bin/what-is-installed
+cd what-is-installed
+./install.sh
 ```
 
-或使用 macOS Finder 启动器：双击桌面上的 `what-is-installed.command`。
+搞定。你会得到：
+- `what-is-installed` 软链接到 `~/.local/bin/`
+- 桌面上一个双击即可运行的启动器（`what-is-installed.command`）
 
 ## 用法
 

@@ -81,3 +81,9 @@ Complete rewrite from the old Chinese-only output example to a modern English RE
 - Platform support table (macOS/Linux/BSD/MinGW/Cygwin)
 - Architecture diagram
 - Sample output showing the current box-drawing table layout
+
+### `03561c5` — docs: bilingual README with language switcher (Hermes)
+
+Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation
+of all sections: features, install, usage, examples, platform table, architecture. Uses
+GitHub-compatible `<a id>` anchors — no JavaScript required.

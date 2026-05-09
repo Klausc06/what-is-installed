@@ -113,6 +113,16 @@ fallback chain (`~/Desktop`, `~/桌面`, `$HOME`). Platform-specific launchers:
 
 Added `launchers/what-is-installed.desktop` template to repo.
 
+### `eeb36f7` — feat: Windows .bat launcher (Hermes)
+
+Added MinGW/Cygwin/Git Bash support to `install.sh`:
+- Detects `MINGW*`/`MSYS*`/`CYGWIN*` via `uname -s`
+- Creates `what-is-installed.bat` on Desktop (chcp 65001 for UTF-8, calls bash)
+- PATH check uses `~/.bashrc`
+- Added `launchers/what-is-installed.bat` template
+
+Now all three major platforms have Desktop launchers: .command (macOS), .desktop (Linux), .bat (Windows).
+
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation

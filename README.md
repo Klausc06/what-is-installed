@@ -34,16 +34,24 @@ The only thing you need is **Bash** — it's built into macOS and Linux. Windows
 |----------|--------------|---------------|
 | macOS | Nothing — Terminal is built-in | — |
 | Linux | Nothing — any terminal works | — |
-| Windows | **Git Bash** (NOT PowerShell, NOT CMD) | [git-scm.com](https://git-scm.com) — install Git for Windows, then launch "Git Bash" from Start Menu |
+| Windows | **Git for Windows** (includes Git Bash) | [git-scm.com](https://git-scm.com) — install, then open "Git Bash" from Start Menu |
 
 ### Install
 
-Open your terminal (or Git Bash on Windows) and run:
+Open your terminal and run:
 
+**macOS / Linux / Git Bash on Windows:**
 ```bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
+```
+
+**PowerShell on Windows:**
+```powershell
+git clone https://github.com/Klausc06/what-is-installed.git
+cd what-is-installed
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 That's it. You'll get:
@@ -167,16 +175,24 @@ MIT
 |------|-----------|---------|
 | macOS | 不需要 — 终端自带 | — |
 | Linux | 不需要 — 任何终端都行 | — |
-| Windows | **Git Bash**（不是 PowerShell，不是 CMD） | [git-scm.com](https://git-scm.com) — 安装 Git for Windows，然后从开始菜单打开 "Git Bash" |
+| Windows | **Git for Windows**（自带 Git Bash） | [git-scm.com](https://git-scm.com) — 安装后从开始菜单打开 "Git Bash" |
 
 ### 安装
 
-打开终端（Windows 打开 Git Bash），运行：
+打开终端，运行：
 
+**macOS / Linux / Windows Git Bash：**
 ```bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
+```
+
+**Windows PowerShell：**
+```powershell
+git clone https://github.com/Klausc06/what-is-installed.git
+cd what-is-installed
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 搞定。你会得到：

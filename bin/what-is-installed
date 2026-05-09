@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve symlinks to find the real install directory
+real="$0"
+while [ -L "$real" ]; do
+  target="$(readlink "$real")"
+  case "$target" in
+    /*) real="$target" ;;
+    *)  real="$(cd "$(dirname "$real")" && pwd)/$target" ;;
+  esac
+done
+SCRIPT_DIR="$(cd "$(dirname "$real")" && pwd)"
 source "$SCRIPT_DIR/../lib/platform.sh"
 source "$SCRIPT_DIR/../lib/render.sh"
 

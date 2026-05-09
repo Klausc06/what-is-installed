@@ -36,42 +36,11 @@ Or use the macOS Finder launcher: double-click `what-is-installed.command` on yo
 
 ## Usage
 
-```
-what-is-installed [OPTIONS]
-
-Options:
-  --help, -h              Show help
-  --no-color              Disable colored output
-  --json                  Output as JSON
-  --csv                   Output as CSV
-  --plain                 Plain text (no box drawing)
-  --ascii                 ASCII characters for box drawing
-  --filter <pattern>      Only show commands matching pattern (fuzzy, case-insensitive)
-  --sort <field>          Sort by: name, version, path (default: name)
-  --no-cache              Skip cache, always do fresh version probing
-  --include-system, -a    Include system directories in scan
-```
-
-### Examples
-
 ```bash
-# Default: colored table grouped by source
 what-is-installed
-
-# Filter to specific tools
-what-is-installed --filter docker
-what-is-installed --filter py
-
-# Machine-readable output
-what-is-installed --json
-what-is-installed --csv
-
-# Plain text, no colors, ASCII borders
-what-is-installed --plain --no-color --ascii
-
-# Include system tools, sort by version
-what-is-installed -a --sort version
 ```
+
+That's it. No flags, no options, no config. Run it and get a beautiful table of every CLI tool on your system.
 
 ### Sample Output
 
@@ -160,42 +129,11 @@ ln -s "$(pwd)/what-is-installed/bin/what-is-installed" ~/.local/bin/what-is-inst
 
 ## 用法
 
-```
-what-is-installed [选项]
-
-选项：
-  --help, -h              显示帮助
-  --no-color              禁用彩色输出
-  --json                  以 JSON 格式输出
-  --csv                   以 CSV 格式输出
-  --plain                 纯文本（无制表符边框）
-  --ascii                 使用 ASCII 字符绘制边框
-  --filter <pattern>      仅显示名称匹配的命令（模糊，不区分大小写）
-  --sort <field>          排序字段：name、version、path（默认：name）
-  --no-cache              跳过缓存，始终进行版本探测
-  --include-system, -a    包括系统目录
-```
-
-### 示例
-
 ```bash
-# 默认：按来源分组的彩色表格
 what-is-installed
-
-# 过滤特定工具
-what-is-installed --filter docker
-what-is-installed --filter py
-
-# 机器可读输出
-what-is-installed --json
-what-is-installed --csv
-
-# 纯文本、无颜色、ASCII 边框
-what-is-installed --plain --no-color --ascii
-
-# 包括系统工具，按版本排序
-what-is-installed -a --sort version
 ```
+
+就这一条命令。没有参数，没有选项，没有配置。直接运行，得到一张漂亮的系统工具清单表格。
 
 ### 输出样例
 

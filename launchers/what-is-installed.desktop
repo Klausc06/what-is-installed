@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=what-is-installed
+Comment=Scan PATH for installed CLI tools
+Exec=bash -c 'what-is-installed; read -p "Press Enter to close..."'
+Terminal=true
+Categories=Utility;

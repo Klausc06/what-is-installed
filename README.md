@@ -34,7 +34,9 @@ cd what-is-installed
 
 That's it. You'll get:
 - `what-is-installed` symlinked to `~/.local/bin/`
-- A double-clickable launcher on your Desktop (`what-is-installed.command`)
+- **macOS**: A double-clickable `.command` launcher on your Desktop
+- **Linux**: A `.desktop` entry on your Desktop (detected via `xdg-user-dir`, works across locales)
+- **Other platforms**: Terminal-only; run `what-is-installed` directly
 
 ## Usage
 
@@ -129,7 +131,9 @@ cd what-is-installed
 
 搞定。你会得到：
 - `what-is-installed` 软链接到 `~/.local/bin/`
-- 桌面上一个双击即可运行的启动器（`what-is-installed.command`）
+- **macOS**：桌面上一个双击即可运行的 `.command` 启动器
+- **Linux**：桌面上一个 `.desktop` 快捷方式（通过 `xdg-user-dir` 检测桌面路径，适配各种语言环境）
+- **其他平台**：仅终端模式；直接运行 `what-is-installed`
 
 ## 用法
 

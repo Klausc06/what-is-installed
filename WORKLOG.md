@@ -91,7 +91,7 @@ Stripped all flags: --help, --no-color, --json, --csv, --plain, --ascii, --filte
 - Tests simplified: removed filter/sort tests, kept PATH order + cache safety + escape helpers
 - `42eebc7`: README updated to reflect flagless design (both English and Chinese)
 
-Lines: 353 → 258 in bin/what-is-installed (-95)
+Lines: 353 → 261 in bin/what-is-installed (-92)
 
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 

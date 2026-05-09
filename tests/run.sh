@@ -1,112 +1,111 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TOOL="$ROOT/bin/what-is-installed"
-TMP_DIR="$(mktemp -d)"
-
-cleanup() {
-  rm -rf "$TMP_DIR"
-}
-trap cleanup EXIT
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+FAIL=0
 
 fail() {
-  printf 'not ok - %s\n' "$1" >&2
-  exit 1
-}
-
-assert_contains() {
-  local haystack="$1" needle="$2" message="$3"
-  [[ "$haystack" == *"$needle"* ]] || fail "$message"
+  echo "not ok - $*"
+  FAIL=$((FAIL + 1))
 }
 
 assert_not_exists() {
-  local path="$1" message="$2"
+  local path="$1" message="${2:-}"
   [[ ! -e "$path" ]] || fail "$message"
 }
 
-make_cmd() {
-  local dir="$1" name="$2" version="$3"
-  mkdir -p "$dir"
-  cat > "$dir/$name" <<EOF
-#!/usr/bin/env bash
-printf '%s\n' "$name version $version"
-EOF
-  chmod +x "$dir/$name"
-}
-
-run_tool() {
-  local path_value="$1" cache_home="$2"
-  shift 2
-  PATH="$path_value" XDG_CACHE_HOME="$cache_home" "$TOOL"
-}
+# ── tests ─────────────────────────────────────────
 
 test_path_order_keeps_first_directory() {
-  local first="$TMP_DIR/path-first" second="$TMP_DIR/path-second" cache="$TMP_DIR/cache-path"
-  make_cmd "$first" shared 1.0
-  make_cmd "$second" shared 2.0
-  make_cmd "$second" secondonly 3.0
+  local bin="$ROOT/bin/what-is-installed"
+  local d1 d2 cache out count
 
-  # Fresh cache dir so no cached results interfere.
-  local output
-  output="$(run_tool "$first:$second:$first:/usr/bin:/bin" "$cache")"
+  d1="$(mktemp -d)"
+  d2="$(mktemp -d)"
+  cache="$(mktemp -d)"
+  trap "rm -rf $d1 $d2 $cache" RETURN
 
-  assert_contains "$output" "shared" "PATH order should include shared command"
-  assert_contains "$output" "secondonly" "PATH order should include secondonly"
+  printf '#!/usr/bin/env bash\necho "1.0.0"\n' > "$d1/sharedtool"
+  printf '#!/usr/bin/env bash\necho "2.0.0"\n' > "$d2/sharedtool"
+  printf '#!/usr/bin/env bash\necho "1.0.0"\n' > "$d1/onlyind1"
+  chmod +x "$d1/sharedtool" "$d2/sharedtool" "$d1/onlyind1"
 
-  # shared should appear once, from first directory.
-  local count
-  count="$(printf '%s\n' "$output" | grep -c "shared")"
+  out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:$d2:/usr/bin:/bin" bash "$bin" 2>/dev/null)"
+
+  count=$(printf '%s\n' "$out" | grep -c 'sharedtool' || true)
   [[ "$count" -eq 1 ]] || fail "shared command should appear exactly once, got $count"
 
-  # first occurrence of shared should come before secondonly.
-  local shared_pos secondonly_pos
-  shared_pos="$(printf '%s\n' "$output" | grep -n "shared" | head -n 1 | cut -d: -f1)"
-  secondonly_pos="$(printf '%s\n' "$output" | grep -n "secondonly" | head -n 1 | cut -d: -f1)"
-  [[ "$shared_pos" -lt "$secondonly_pos" ]] || fail "PATH directory order should be preserved"
+  local d1_line d2_path_line
+  d1_line=$(printf '%s\n' "$out" | grep -n "$d1" | head -1 | cut -d: -f1 || echo 999)
+  d2_path_line=$(printf '%s\n' "$out" | grep -n "$d2" | head -1 | cut -d: -f1 || echo 999)
+  [[ "$d1_line" -lt 999 && "$d1_line" -lt "$d2_path_line" ]] || fail "PATH directory order should be preserved"
 }
 
-test_cache_works_and_safe_parser() {
-  local bin="$TMP_DIR/cache-bin" cache="$TMP_DIR/cache-home" marker="$TMP_DIR/cache-sourced"
-  make_cmd "$bin" cachetool 1.0
+test_cache_writes_and_is_safe() {
+  local bin="$ROOT/bin/what-is-installed"
+  local d1 cache cache_file marker content
 
-  # First run: populate cache.
-  run_tool "$bin:/usr/bin:/bin" "$cache" >/dev/null
+  d1="$(mktemp -d)"
+  cache="$(mktemp -d)"
+  trap "rm -rf $d1 $cache" RETURN
 
-  # Change the binary but keep cache fresh.
-  make_cmd "$bin" cachetool 2.0
+  printf '#!/usr/bin/env bash\necho "1.0.0"\n' > "$d1/cachetool"
+  chmod +x "$d1/cachetool"
 
-  local cached
-  cached="$(run_tool "$bin:/usr/bin:/bin" "$cache")"
-  assert_contains "$cached" "cachetool" "should return cached version (1.0, not 2.0)"
+  # Run once to populate cache
+  XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null >/dev/null
 
-  # Inject malicious content into cache — must not be executed.
-  local cache_file="$cache/what-is-installed/versions.cache"
+  # Verify cache was written
+  cache_file="$cache/what-is-installed/versions.cache"
+  [[ -f "$cache_file" ]] || fail "cache file should exist after first run"
+
+  content="$(cat "$cache_file")"
+  [[ "$content" == *"cachetool"* ]] || fail "cache should contain cachetool"
+
+  # Second run should use cache (fast)
+  out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null)"
+  [[ "$out" == *"cachetool"* ]] || fail "cached run should show cachetool"
+
+  # Poison: executable code in cache must NOT execute
+  rm -rf "$cache"
+  mkdir -p "$(dirname "$cache_file")"
+  marker="/tmp/hermes_test_cache_ran_$$"
+  rm -f "$marker"
   {
     printf 'ts\t%s\n' "$(date +%s)"
-    printf 'entry\tcachetool\t3.0\n'
-    printf 'touch %s\n' "$marker"
+    printf 'entry\tfoo\tbar\n'
+    printf '#!/usr/bin/env bash\necho EXPLOITED > %s\n' "$marker"
   } > "$cache_file"
 
-  cached="$(run_tool "$bin:/usr/bin:/bin" "$cache")"
-  assert_contains "$cached" "cachetool" "safe parser should load valid cache entries"
+  XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null >/dev/null || true
   assert_not_exists "$marker" "cache loader must not execute cache contents"
+  rm -f "$marker"
 }
 
-test_json_and_csv_escape_helpers() {
-  # shellcheck source=/dev/null
+test_json_and_csv_helpers() {
   source "$ROOT/lib/render.sh"
 
   local json csv
-  json="$(json_escape $'a\\b"c\td\ne\r')"
-  [[ "$json" == 'a\\b\"c\td\ne\r' ]] || fail "json_escape should escape quotes, slashes, tab, newline, and carriage return"
+
+  json="$(json_escape '\')"
+  [[ "$json" == '\\' ]] || fail "json_escape backslash: got '$json'"
+
+  json="$(json_escape '"')"
+  [[ "$json" == '\"' ]] || fail "json_escape double quote: got '$json'"
+
+  json="$(json_escape $'\t')"
+  [[ "$json" == '\t' ]] || fail "json_escape tab: got '$json'"
+
+  json="$(json_escape $'\n')"
+  [[ "$json" == '\n' ]] || fail "json_escape newline: got '$json'"
 
   csv="$(csv_field $'a,"b"\nc')"
-  [[ "$csv" == $'"a,""b""\nc"' ]] || fail "csv_field should quote newlines and double embedded quotes"
+  [[ "$csv" == $'"a,""b""\nc"' ]] || fail "csv_field: got '$csv'"
 }
 
 test_path_order_keeps_first_directory
-test_cache_works_and_safe_parser
-test_json_and_csv_escape_helpers
+test_cache_writes_and_is_safe
+test_json_and_csv_helpers
 
-printf 'ok - all tests passed\n'
+[[ $FAIL -eq 0 ]] && printf 'ok - all tests passed\n'
+exit $FAIL

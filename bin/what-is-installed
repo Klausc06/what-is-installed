@@ -5,73 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/../lib/platform.sh"
 source "$SCRIPT_DIR/../lib/render.sh"
 
-usage() {
-  cat <<'EOF'
-Usage: what-is-installed [OPTIONS]
-
-Scan $PATH directories and show available command-line tools with versions.
-
-Options:
-  --help, -h              Show this help message and exit
-  --no-color              Disable colored output
-  --json                  Output as JSON
-  --csv                   Output as CSV
-  --plain                 Output as plain text (no box drawing)
-  --ascii                 Use ASCII characters for box drawing
-  --filter <pattern>      Only show commands matching pattern (fuzzy, case-insensitive)
-  --sort <field>          Sort by: name, version, path (default: name)
-  --no-cache              Skip file cache, always do fresh version probing
-  --include-system, -a    Include system directories in scan
-EOF
-}
-
-NO_COLOR=""
-ASCII_MODE=""
-OUTPUT_FORMAT="table"
-FILTER=""
-SORT_FIELD=""
-NO_CACHE=""
-INCLUDE_SYSTEM=""
-
-die_usage() {
-  printf '%s\n' "$1" >&2
-  usage >&2
-  exit 1
-}
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --help|-h)            usage; exit 0 ;;
-    --no-color)           NO_COLOR=1; shift ;;
-    --json)               OUTPUT_FORMAT="json"; shift ;;
-    --csv)                OUTPUT_FORMAT="csv"; shift ;;
-    --plain)              OUTPUT_FORMAT="plain"; shift ;;
-    --ascii)              ASCII_MODE=1; shift ;;
-    --filter)
-      [[ $# -ge 2 && "${2:-}" != --* ]] || die_usage "Missing value for --filter"
-      FILTER="$2"
-      shift 2
-      ;;
-    --sort)
-      [[ $# -ge 2 && "${2:-}" != --* ]] || die_usage "Missing value for --sort"
-      case "$2" in
-        name|version|path) SORT_FIELD="$2" ;;
-        *) die_usage "Invalid --sort value: $2" ;;
-      esac
-      shift 2
-      ;;
-    --no-cache)           NO_CACHE=1; shift ;;
-    --include-system|-a)  INCLUDE_SYSTEM=1; shift ;;
-    *)                    printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
-  esac
-done
-
-setup_colors
-setup_glyphs
-
-[[ -n "${C_MAGENTA:-}" ]] || C_MAGENTA="$C_RESET"
-[[ -n "${C_RED:-}" ]]    || C_RED="$C_RESET"
-
 short_path() {
   local p="$1"
   p="${p/#$HOME/~}"
@@ -228,7 +161,13 @@ get_command_version() {
   VERSION_RESULT="$result"
 }
 
-[[ -z "$NO_CACHE" ]] && { load_cache || true; }
+# ── main ──────────────────────────────────────────────
+
+NO_COLOR="" ASCII_MODE=""
+setup_colors
+setup_glyphs
+
+load_cache || true
 
 SEEN_NAMES=("")
 SEEN_FAMILIES=("")
@@ -260,11 +199,7 @@ done
 IFS="$OLD_IFS"
 
 for dir in "${PATH_DIRS[@]}"; do
-  if [[ -z "$INCLUDE_SYSTEM" ]]; then
-    [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
-  else
-    [[ -z "$dir" || ! -d "$dir" ]] && continue
-  fi
+  [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
 
   label="$(section_label "$dir")"
   section_items_before=${#ALL_SECTION_ITEMS[@]}
@@ -275,12 +210,6 @@ for dir in "${PATH_DIRS[@]}"; do
     [[ -x "$path" ]] || continue
 
     name="${path##*/}"
-
-    if [[ -n "${FILTER:-}" ]]; then
-      name_lower="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-      filter_lower="$(printf '%s' "$FILTER" | tr '[:upper:]' '[:lower:]')"
-      [[ "$name_lower" == *"$filter_lower"* ]] || continue
-    fi
 
     get_command_version "$name"
     ver="$VERSION_RESULT"
@@ -325,29 +254,8 @@ for dir in "${PATH_DIRS[@]}"; do
   fi
 done
 
-if [[ -n "${SORT_FIELD:-}" && "$SORT_FIELD" != "name" ]]; then
-  for si in "${!ALL_SECTION_DIRS[@]}"; do
-    start="${ALL_SECTION_START[$si]}"
-    count="${ALL_SECTION_COUNTS[$si]}"
+write_cache || true
 
-    slice=()
-    for ((j = start; j < start + count; j++)); do
-      slice+=("${ALL_SECTION_ITEMS[$j]}")
-    done
+# ── render ──────────────────────────────────────────────
 
-    sorted_slice=()
-    if [[ "$SORT_FIELD" == "version" ]]; then
-      IFS=$'\n' sorted_slice=($(printf '%s\n' "${slice[@]}" | sort -t'|' -k2,2 -V))
-    else
-      IFS=$'\n' sorted_slice=($(printf '%s\n' "${slice[@]}" | sort -t'|' -k3,3))
-    fi
-
-    for ((j = 0; j < count; j++)); do
-      ALL_SECTION_ITEMS[$((start + j))]="${sorted_slice[$j]}"
-    done
-  done
-fi
-
-[[ -z "$NO_CACHE" ]] && { write_cache || true; }
-
-dispatch_render
+render_table

@@ -2,7 +2,7 @@ detect_os() {
   case "$(uname -s)" in
     Darwin)         printf '%s' 'macos' ;;
     Linux)          printf '%s' 'linux' ;;
-    *BSD)           printf '%s' 'bsd' ;;
+    *BSD|DragonFly) printf '%s' 'bsd' ;;
     MINGW* | MSYS*) printf '%s' 'mingw' ;;
     CYGWIN*)        printf '%s' 'cygwin' ;;
     *)              printf '%s' 'unknown' ;;
@@ -60,6 +60,7 @@ section_label() {
         */.npm-global/bin) printf '%s' 'npm Global' ;;
         */usr/local/bin|*/usr/local/sbin) printf '%s' 'System Local' ;;
         */snap/bin)         printf '%s' 'Snap' ;;
+        */linuxbrew/*/bin)  printf '%s' 'Homebrew' ;;
         *)                 printf '%s' 'Other' ;;
       esac
       ;;

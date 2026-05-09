@@ -1,3 +1,5 @@
+# Reserved: render_json, render_csv, render_plain, dispatch_render are
+# not currently called (render_table is used directly) but kept for future use.
 setup_glyphs() {
   if [[ -n "$ASCII_MODE" ]]; then
     B_TL='+' B_TR='+' B_BL='+' B_BR='+'

@@ -37,8 +37,8 @@ if ($env:PATH -split ";" -notcontains $BinDir) {
     Write-Host ""
     Write-Host "  ⚠  $BinDir is not in your PATH."
     Write-Host "     Add it manually (System Properties → Environment Variables)"
-    Write-Host "     or run this in an admin PowerShell:"
-    Write-Host '     [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";' + $BinDir + '", "User")'
+    Write-Host "     or run this in an admin PowerShell (safe to run multiple times):"
+    Write-Host '     $p = [Environment]::GetEnvironmentVariable("PATH","User"); if ($p -notlike "*' + $BinDir + '*") { [Environment]::SetEnvironmentVariable("PATH", "$p;' + $BinDir + '", "User") }'
     Write-Host ""
     Write-Host "     Then restart your terminal."
 }

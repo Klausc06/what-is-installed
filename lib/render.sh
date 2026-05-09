@@ -41,6 +41,34 @@ ver_color() {
   fi
 }
 
+json_escape() {
+  local value="$1" out="" i=0 char
+  while [[ $i -lt ${#value} ]]; do
+    char="${value:$i:1}"
+    case "$char" in
+      '\') out+='\\' ;;
+      '"') out+='\"' ;;
+      $'\n') out+='\n' ;;
+      $'\r') out+='\r' ;;
+      $'\t') out+='\t' ;;
+      $'\b') out+='\b' ;;
+      $'\f') out+='\f' ;;
+      *) out+="$char" ;;
+    esac
+    i=$((i + 1))
+  done
+  printf '%s' "$out"
+}
+
+csv_field() {
+  local value="$1"
+  if [[ "$value" == *','* || "$value" == *'"'* || "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+    printf '"%s"' "${value//\"/\"\"}"
+  else
+    printf '%s' "$value"
+  fi
+}
+
 render_table() {
   local num_sections=${#ALL_SECTION_DIRS[@]}
   local si label start count j entry ename ever epath sp
@@ -96,7 +124,7 @@ render_table() {
     printf '%-*s' "$max_path" "Path"
     printf ' %s\n' "$C_DIM$B_V$C_RESET"
 
-    printf '%s%s%s%s%s%s%s%s%s%s\n' \
+    printf '%s%s%s%s%s%s%s\n' \
       "$C_DIM$B_CL" \
       "$(repeat_char "$B_H" $((max_name + 1)))" \
       "$B_CM" \
@@ -119,7 +147,7 @@ render_table() {
       printf ' %s\n' "$C_DIM$B_V$C_RESET"
     done
 
-    printf '%s%s%s%s%s%s%s%s%s%s\n' \
+    printf '%s%s%s%s%s%s%s\n' \
       "$C_DIM$B_BL" \
       "$(repeat_char "$B_H" $((max_name + 1)))" \
       "$B_BM" \
@@ -149,10 +177,10 @@ render_json() {
       fi
       first=false
       printf '\n  {"name":"%s","version":"%s","path":"%s","section":"%s"}' \
-        "$(printf '%s' "$ename" | sed 's/\\/\\\\/g; s/"/\\"/g')" \
-        "$(printf '%s' "$ever"  | sed 's/\\/\\\\/g; s/"/\\"/g')" \
-        "$(printf '%s' "$epath" | sed 's/\\/\\\\/g; s/"/\\"/g')" \
-        "$(printf '%s' "$label" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+        "$(json_escape "$ename")" \
+        "$(json_escape "$ever")" \
+        "$(json_escape "$epath")" \
+        "$(json_escape "$label")"
     done
   done
   printf '\n]\n'
@@ -175,11 +203,7 @@ render_csv() {
           printf ','
         fi
         first=false
-        if [[ "$field" == *','* ]] || [[ "$field" == *'"'* ]]; then
-          printf '"%s"' "${field//\"/\"\"}"
-        else
-          printf '%s' "$field"
-        fi
+        csv_field "$field"
       done
       printf '\n'
     done

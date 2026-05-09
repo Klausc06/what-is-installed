@@ -167,7 +167,13 @@ NO_COLOR="" ASCII_MODE=""
 setup_colors
 setup_glyphs
 
-load_cache || true
+FIRST_RUN=false
+load_cache || FIRST_RUN=true
+
+if $FIRST_RUN; then
+  echo "  (first run — probing versions, may take a few seconds...)" >&2
+  echo >&2
+fi
 
 SEEN_NAMES=("")
 SEEN_FAMILIES=("")

@@ -60,6 +60,8 @@ what-is-installed
 
 If you see a colored table of your CLI tools, it's working. If you get "command not found", make sure `~/.local/bin` is in your PATH (the installer warns you if it isn't).
 
+> **First run?** It'll take a few seconds — the tool probes every command for its version. After that, results are cached and it's instant.
+
 ## Usage
 
 ```bash
@@ -190,6 +192,8 @@ what-is-installed
 ```
 
 如果看到一张彩色表格列出你的 CLI 工具，就成功了。如果提示 "command not found"，检查 `~/.local/bin` 是否在 PATH 中（安装脚本会提示你）。
+
+> **第一次运行？** 会慢几秒——需要逐一探测每个命令的版本号。之后有缓存，秒出。
 
 ## 用法
 

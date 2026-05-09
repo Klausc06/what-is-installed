@@ -93,6 +93,16 @@ Stripped all flags: --help, --no-color, --json, --csv, --plain, --ascii, --filte
 
 Lines: 353 → 261 in bin/what-is-installed (-92)
 
+### `c0f8cf1` — feat: install.sh with Desktop launcher (Hermes)
+
+Created `install.sh` that does everything in one command:
+- Symlinks `bin/what-is-installed` → `~/.local/bin/what-is-installed`
+- Copies `launchers/what-is-installed.command` → `~/Desktop/` (macOS Finder double-click)
+- Checks if `~/.local/bin` is in PATH, warns if not
+- Added launcher template to repo (`launchers/what-is-installed.command`)
+
+User experience: `git clone && cd && ./install.sh` — done. Desktop icon appears.
+
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation

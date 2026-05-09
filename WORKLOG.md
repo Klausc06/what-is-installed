@@ -123,6 +123,11 @@ Added MinGW/Cygwin/Git Bash support to `install.sh`:
 
 Now all three major platforms have Desktop launchers: .command (macOS), .desktop (Linux), .bat (Windows).
 
+### `ace0767` — `376222f` — docs: Built With / 致谢 section
+
+Added acknowledgments section in both English and Chinese, listing all tools used:
+Hermes, Claude Code, Codex, DeepSeek, OpenCode, WorkBuddy, free-claude-code, Homebrew, Bash.
+
 ---
 
 ## 2026-05-10 — Hermes Final Review

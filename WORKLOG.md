@@ -176,3 +176,25 @@ Project state: production-ready. Zero CLI options, three-platform desktop launch
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation
 of all sections: features, install, usage, examples, platform table, architecture. Uses
 GitHub-compatible `<a id>` anchors — no JavaScript required.
+
+## 2026-05-10 — Windows fixes from real-world feedback
+
+User's friend (lenoov, DESKTOP-6VEJG6K, Git Bash MINGW64) reported:
+1. 双击 .bat 闪退 — .bat called `bash -c "what-is-installed"` but bash's PATH
+   didn't include ~/.local/bin, so command not found → window closed
+2. PowerShell 里 `what-is-installed` 找不到 — install.sh only created a symlink,
+   PowerShell doesn't recognize extensionless files
+3. System32/MinGW title bar confusion — CMD window showed "System32" in title
+4. System32 scanned — Windows system dirs not filtered by get_system_dirs
+
+Fixes in `71c888e`:
+- install.sh on Windows: copy script + create .bat wrapper (not bare symlink),
+  so CMD/PowerShell can find `what-is-installed`
+- install.sh: auto-add ~/.local/bin to .bashrc on Windows, no more copy-paste
+- install.ps1: auto-add to user PATH via registry, update current session
+- platform.sh: filter `/c/Windows/*`, `/proc`, `/usr/bin`, `/usr/lib/git-core`
+  on mingw/cygwin — no more scanning System32
+- platform.sh: label MinGW paths (mingw64, clang64, ucrt64) as 'MinGW'
+- .bat launcher: `title what-is-installed` so window title is clean
+- install.sh PATH check: fixed duplicate messages on Windows (case fallthrough)
+- .bat: checks if script exists before running, shows helpful error if missing

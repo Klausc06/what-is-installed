@@ -57,3 +57,17 @@ A shell tool that dynamically scans `$PATH` to report every installed CLI tool w
 - Clean: no secrets, no eval/exec, no external deps beyond tput.
 - Known: `bin/what-is-installed` has 120 lines of uncommitted changes from prior session — not yet committed/pushed.
 - CI gap: no GitHub Actions configured (no .github/workflows). Source: Hermes.
+
+### `876d762` — feat: commit prior session safety hardening (Hermes)
+
+Previously uncommitted changes from 2026-05-08 session, committed by Hermes:
+- Replaced `source "$cache_file"` with safe TSV parser — cache files are no longer executed as code
+- Added `escape_cache_field`/`unescape_cache_field` for safe special-character handling
+- Rewrote PATH deduplication to preserve original directory order (was `sort -u`)
+- Added `die_usage()` helper for consistent error+usage output
+- Added `--filter`/`--sort` missing-value checks and sort field validation (name|version|path)
+- Fixed `CACHE_NAMES=("")` empty-element bug → `CACHE_NAMES=()`
+- Added `SEEN_PATH_DIRS` for proper duplicate detection
+- All tests passing, syntax check clean
+
+30 commits on main, working tree clean.

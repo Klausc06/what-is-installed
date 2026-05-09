@@ -4,7 +4,8 @@
 - `main` — primary development branch
 
 ## Current State
-- 28 commits (2026-05-10, Hermes review)
+- 30 commits (2026-05-10, Hermes committed prior session work)
+- Working tree clean
 - Shell script project at ~/Documents/Projects/what-is-installed
 - 679 LOC (bin/what-is-installed 353, lib/platform.sh 79, lib/render.sh 247)
 - 136 LOC tests (tests/run.sh, all passing)
@@ -23,4 +24,3 @@ Scans PATH for commands in non-system directories and displays their version num
 
 ## Known Issues
 - No CI pipeline (shellcheck + tests should run on push)
-- Uncommitted changes in bin/what-is-installed from prior agent session

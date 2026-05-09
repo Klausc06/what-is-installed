@@ -123,6 +123,19 @@ Added MinGW/Cygwin/Git Bash support to `install.sh`:
 
 Now all three major platforms have Desktop launchers: .command (macOS), .desktop (Linux), .bat (Windows).
 
+---
+
+## 2026-05-10 — Hermes Final Review
+
+Comprehensive audit of all 44 commits:
+- shellcheck: 0 real bugs (all warnings are false positives: library files, cross-file source, intentional patterns)
+- tests: all passing
+- bash -n: 5/5 scripts syntax clean
+- git: working tree clean
+- Lines: bin/what-is-installed 261, lib/platform.sh 79, lib/render.sh 247, install.sh 120, tests/run.sh 111
+
+Project state: production-ready. Zero CLI options, three-platform desktop launchers, safe TSV cache, bilingual README.
+
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation

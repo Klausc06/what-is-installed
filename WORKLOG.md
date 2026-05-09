@@ -73,6 +73,15 @@ Fixes in `71c888e`:
 
 **Lesson**: bash tools reviewed on macOS cover ~70% of bugs. Windows-specific: PATH isolation, extensionless files, system dir pollution, 3-shell compatibility. Real Windows users are the only reliable QA.
 
+### Round 2 — Timeout Hang + MinGW Flood
+
+Friend ran fixed version, still hung: printed first-run message, then nothing. Root cause: `run_with_timeout` used `{ sleep; kill; } &` background-killer pattern — `kill` doesn't work on Git Bash, `wait` hung forever. Secondary: `/mingw64/bin` has 500+ executables, all probed.
+
+Fixes in `1da7be3`:
+- `run_with_timeout`: replaced background killer with foreground `kill -0` polling loop; prefer GNU `timeout` when available
+- platform.sh: filter `/mingw*` paths (MSYS2 system tools, same logic as filtering `/usr/bin` on Linux)
+- Progress dots to stderr (one per directory) so user sees activity
+
 ## Current State
 
-64 commits on main. Clean tree. 0 shellcheck bugs. All tests pass. Windows CI pending.
+66 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.

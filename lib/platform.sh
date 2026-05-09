@@ -42,8 +42,15 @@ section_label() {
         */.local/bin)      printf '%s' 'User Local' ;;
         */.npm-global/bin) printf '%s' 'npm Global' ;;
         /opt/homebrew/bin) printf '%s' 'Homebrew' ;;
+        */usr/local/bin|*/usr/local/sbin)
+          # Intel Mac: /usr/local is Homebrew's default prefix
+          if [[ -x /usr/local/bin/brew ]]; then
+            printf '%s' 'Homebrew'
+          else
+            printf '%s' 'System Local'
+          fi
+          ;;
         */Library/Frameworks/Python.framework/*/bin) printf '%s' 'Python Framework' ;;
-        */usr/local/bin|*/usr/local/sbin) printf '%s' 'System Local' ;;
         *)                 printf '%s' 'Other' ;;
       esac
       ;;

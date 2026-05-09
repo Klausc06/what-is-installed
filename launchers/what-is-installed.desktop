@@ -2,6 +2,6 @@
 Type=Application
 Name=what-is-installed
 Comment=Scan PATH for installed CLI tools
-Exec=bash -c 'what-is-installed; read -p "Press Enter to close..."'
+Exec=bash -c 'export PATH="$HOME/.local/bin:$PATH"; what-is-installed; read -rp "Press Enter to close..."'
 Terminal=true
 Categories=Utility;

@@ -47,7 +47,7 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
   echo "  ⚠  $BIN_DIR is not in your PATH."
   case "$OS" in
     macos)   rc="$HOME/.zshrc" ;;
-    linux)   rc="$HOME/.bashrc" ;;
+    linux) rc="$HOME/.profile" ;;
     windows) rc="$HOME/.bashrc" ;;
     *)       rc="your shell profile" ;;
   esac
@@ -75,7 +75,7 @@ case "$OS" in
 Type=Application
 Name=what-is-installed
 Comment=Scan PATH for installed CLI tools
-Exec=bash -c 'what-is-installed; read -p "Press Enter to close..."'
+Exec=bash -c 'export PATH="$HOME/.local/bin:$PATH"; what-is-installed; read -rp "Press Enter to close..."'
 Terminal=true
 Categories=Utility;
 DESKTOPEOF

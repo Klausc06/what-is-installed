@@ -21,10 +21,13 @@ if (-not $bash) {
 # Create bin directory
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
 
+# Copy the main script into bin directory (no fragile symlinks on Windows)
+Copy-Item -Path "$ScriptRoot\bin\what-is-installed" -Destination "$BinDir\what-is-installed" -Force
+
 # Create a .bat wrapper so what-is-installed works from PowerShell / CMD / Run dialog
 $Wrapper = @"
 @echo off
-bash "$ScriptRoot\bin\what-is-installed" %*
+bash "%~dp0what-is-installed" %*
 "@
 Set-Content -Path "$BinDir\what-is-installed.bat" -Value $Wrapper -Encoding ASCII | Out-Null
 Write-Host "  ✓  what-is-installed → $BinDir\what-is-installed.bat"

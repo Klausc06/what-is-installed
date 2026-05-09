@@ -65,8 +65,9 @@ unescape_cache_field() {
 
 write_cache() {
   local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed"
-  local i
+  local i tmp
   mkdir -p "$cache_dir"
+  tmp="$(mktemp "$cache_dir/.versions.XXXXXX")"
   {
     printf 'ts\t%s\n' "$(date +%s)"
     if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
@@ -76,7 +77,7 @@ write_cache() {
           "$(escape_cache_field "${CACHE_VALS[$i]}")"
       done
     fi
-  } > "$cache_dir/versions.cache"
+  } > "$tmp" && mv "$tmp" "$cache_dir/versions.cache"
 }
 
 load_cache() {
@@ -121,7 +122,7 @@ run_with_timeout() {
     rm -f "$tmpfile"
     return 124
   fi
-  tr -d '\0' <"$tmpfile"
+  tr -d '\0' <"$tmpfile" 2>/dev/null
   rm -f "$tmpfile"
   return $exit_code
 }
@@ -151,7 +152,7 @@ get_command_version() {
   if [[ -z "$output" ]]; then
     result="-"
   else
-    if ! printf '%s' "$output" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
+    if command -v iconv >/dev/null 2>&1 && ! printf '%s' "$output" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
       output="$(printf '%s' "$output" | iconv -f latin1 -t utf-8 2>/dev/null || printf '%s' "$output")"
     fi
 
@@ -172,7 +173,7 @@ get_command_version() {
 
 # ── main ──────────────────────────────────────────────
 
-NO_COLOR="" ASCII_MODE=""
+NO_COLOR="${NO_COLOR:-}" ASCII_MODE="${ASCII_MODE:-}"
 setup_colors
 setup_glyphs
 
@@ -184,9 +185,9 @@ if $FIRST_RUN; then
   echo >&2
 fi
 
-SEEN_NAMES=("")
-SEEN_FAMILIES=("")
-SEEN_VERSIONS=("")
+SEEN_NAMES=()
+SEEN_FAMILIES=()
+SEEN_VERSIONS=()
 SEEN_PATH_DIRS=()
 
 ALL_SECTION_DIRS=()
@@ -220,6 +221,7 @@ for dir in "${PATH_DIRS[@]}"; do
   section_items_before=${#ALL_SECTION_ITEMS[@]}
   has_items=false
 
+  shopt -s nullglob
   for path in "$dir"/*; do
     [[ -f "$path" || -L "$path" ]] || continue
     [[ -x "$path" ]] || continue
@@ -231,9 +233,11 @@ for dir in "${PATH_DIRS[@]}"; do
     [[ "$ver" == "-" ]] && continue
 
     found=false
-    for seen in "${SEEN_NAMES[@]}"; do
-      [[ "$seen" == "$name" ]] && { found=true; break; }
-    done
+    if [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
+      for seen in "${SEEN_NAMES[@]}"; do
+        [[ "$seen" == "$name" ]] && { found=true; break; }
+      done
+    fi
     [[ "$found" == true ]] && continue
 
     family="${name%-*}"
@@ -260,6 +264,7 @@ for dir in "${PATH_DIRS[@]}"; do
     ALL_SECTION_ITEMS+=("$name|$ver|$path")
     has_items=true
   done
+  shopt -u nullglob
 
   if [[ "$has_items" == true ]]; then
     count=$(( ${#ALL_SECTION_ITEMS[@]} - section_items_before ))

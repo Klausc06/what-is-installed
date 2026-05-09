@@ -22,7 +22,6 @@ setup_colors() {
     C_YELLOW=$'\033[33m'
     C_BLUE=$'\033[34m'
     C_MAGENTA=$'\033[35m'
-    C_RED=$'\033[31m'
   fi
 }
 
@@ -126,11 +125,11 @@ render_table() {
 
     printf '%s%s%s%s%s%s%s\n' \
       "$C_DIM$B_CL" \
-      "$(repeat_char "$B_H" $((max_name + 1)))" \
+      "$(repeat_char "$B_H" $((max_name + 2)))" \
       "$B_CM" \
-      "$(repeat_char "$B_H" $((max_ver + 1)))" \
+      "$(repeat_char "$B_H" $((max_ver + 2)))" \
       "$B_CM" \
-      "$(repeat_char "$B_H" $((max_path + 1)))" \
+      "$(repeat_char "$B_H" $((max_path + 2)))" \
       "$B_CR$C_RESET"
 
     for ((j = start; j < start + count; j++)); do
@@ -149,11 +148,11 @@ render_table() {
 
     printf '%s%s%s%s%s%s%s\n' \
       "$C_DIM$B_BL" \
-      "$(repeat_char "$B_H" $((max_name + 1)))" \
+      "$(repeat_char "$B_H" $((max_name + 2)))" \
       "$B_BM" \
-      "$(repeat_char "$B_H" $((max_ver + 1)))" \
+      "$(repeat_char "$B_H" $((max_ver + 2)))" \
       "$B_BM" \
-      "$(repeat_char "$B_H" $((max_path + 1)))" \
+      "$(repeat_char "$B_H" $((max_path + 2)))" \
       "$B_BR$C_RESET"
 
     printf '\n'

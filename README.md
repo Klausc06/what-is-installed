@@ -36,6 +36,7 @@ That's it. You'll get:
 - `what-is-installed` symlinked to `~/.local/bin/`
 - **macOS**: A double-clickable `.command` launcher on your Desktop
 - **Linux**: A `.desktop` entry on your Desktop (detected via `xdg-user-dir`, works across locales)
+- **Windows**: A `.bat` launcher on your Desktop (requires Git Bash / MinGW in PATH)
 - **Other platforms**: Terminal-only; run `what-is-installed` directly
 
 ## Usage
@@ -67,13 +68,13 @@ That's it. No flags, no options, no config. Run it and get a beautiful table of 
 
 ## Supported Platforms
 
-| OS | Detection | System dirs filtered |
-|----|-----------|---------------------|
-| macOS | `Darwin` | `/bin`, `/sbin`, `/usr/*`, `/System/`, `/Library/Apple/` |
-| Linux | `Linux` | `/bin`, `/sbin`, `/usr/*`, `/lib/systemd/` |
-| BSD | `*BSD` | `/bin`, `/sbin`, `/usr/*`, `/rescue/` |
-| MinGW | `MINGW*` | `/c/Windows/` |
-| Cygwin | `CYGWIN*` | `/c/Windows/` |
+| OS | Detection | System dirs filtered | Launcher |
+|----|-----------|---------------------|----------|
+| macOS | `Darwin` | `/bin`, `/sbin`, `/usr/*`, `/System/`, `/Library/Apple/` | `.command` |
+| Linux | `Linux` | `/bin`, `/sbin`, `/usr/*`, `/lib/systemd/` | `.desktop` |
+| BSD | `*BSD` | `/bin`, `/sbin`, `/usr/*`, `/rescue/` | — |
+| MinGW | `MINGW*` | `/c/Windows/` | `.bat` |
+| Cygwin | `CYGWIN*` | `/c/Windows/` | `.bat` |
 
 Source categories are auto-detected per platform (Homebrew, Snap, npm Global, Python Framework, etc.).
 
@@ -133,6 +134,7 @@ cd what-is-installed
 - `what-is-installed` 软链接到 `~/.local/bin/`
 - **macOS**：桌面上一个双击即可运行的 `.command` 启动器
 - **Linux**：桌面上一个 `.desktop` 快捷方式（通过 `xdg-user-dir` 检测桌面路径，适配各种语言环境）
+- **Windows**：桌面上一个 `.bat` 启动器（需要 Git Bash / MinGW 在 PATH 中）
 - **其他平台**：仅终端模式；直接运行 `what-is-installed`
 
 ## 用法
@@ -164,13 +166,13 @@ what-is-installed
 
 ## 支持平台
 
-| 操作系统 | 检测标识 | 过滤的系统目录 |
-|---------|---------|--------------|
-| macOS | `Darwin` | `/bin`、`/sbin`、`/usr/*`、`/System/`、`/Library/Apple/` |
-| Linux | `Linux` | `/bin`、`/sbin`、`/usr/*`、`/lib/systemd/` |
-| BSD | `*BSD` | `/bin`、`/sbin`、`/usr/*`、`/rescue/` |
-| MinGW | `MINGW*` | `/c/Windows/` |
-| Cygwin | `CYGWIN*` | `/c/Windows/` |
+| 操作系统 | 检测标识 | 过滤的系统目录 | 启动器 |
+|---------|---------|--------------|--------|
+| macOS | `Darwin` | `/bin`、`/sbin`、`/usr/*`、`/System/`、`/Library/Apple/` | `.command` |
+| Linux | `Linux` | `/bin`、`/sbin`、`/usr/*`、`/lib/systemd/` | `.desktop` |
+| BSD | `*BSD` | `/bin`、`/sbin`、`/usr/*`、`/rescue/` | — |
+| MinGW | `MINGW*` | `/c/Windows/` | `.bat` |
+| Cygwin | `CYGWIN*` | `/c/Windows/` | `.bat` |
 
 来源分类按平台自动检测（Homebrew、Snap、npm Global、Python Framework 等）。
 

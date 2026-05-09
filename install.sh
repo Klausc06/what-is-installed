@@ -6,9 +6,11 @@ BIN_DIR="$HOME/.local/bin"
 
 detect_os() {
   case "$(uname -s)" in
-    Darwin)  echo "macos" ;;
-    Linux)   echo "linux" ;;
-    *)       echo "other" ;;
+    Darwin)           echo "macos" ;;
+    Linux)            echo "linux" ;;
+    MINGW* | MSYS*)   echo "windows" ;;
+    CYGWIN*)          echo "windows" ;;
+    *)                echo "other" ;;
   esac
 }
 
@@ -17,7 +19,11 @@ detect_desktop_dir() {
   if command -v xdg-user-dir &>/dev/null; then
     xdg-user-dir DESKTOP 2>/dev/null && return
   fi
-  # Fallback: common paths
+  # Windows (MinGW/Cygwin): Desktop is consistently named
+  if [[ -d "$HOME/Desktop" ]]; then
+    echo "$HOME/Desktop" && return
+  fi
+  # Fallback: common Linux paths
   for d in "$HOME/Desktop" "$HOME/桌面"; do
     [[ -d "$d" ]] && { echo "$d"; return; }
   done
@@ -40,9 +46,10 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
   echo
   echo "  ⚠  $BIN_DIR is not in your PATH."
   case "$OS" in
-    macos) rc="$HOME/.zshrc" ;;
-    linux) rc="$HOME/.bashrc" ;;
-    *)     rc="your shell profile" ;;
+    macos)   rc="$HOME/.zshrc" ;;
+    linux)   rc="$HOME/.bashrc" ;;
+    windows) rc="$HOME/.bashrc" ;;
+    *)       rc="your shell profile" ;;
   esac
   echo "     Add this to $rc:"
   echo
@@ -73,11 +80,28 @@ Terminal=true
 Categories=Utility;
 DESKTOPEOF
     chmod +x "$DESKTOP/what-is-installed.desktop"
-    # Some file managers need the executable bit, others need trust
     command -v gio &>/dev/null && gio set "$DESKTOP/what-is-installed.desktop" metadata::trusted true 2>/dev/null || true
     echo "  ✓  Desktop launcher → $DESKTOP/what-is-installed.desktop"
     echo
     echo "  Double-click it in your file manager to run."
+    ;;
+
+  windows)
+    # Create .bat launcher for double-click in Explorer.
+    # Git Bash / MinGW users can also run `what-is-installed` directly in terminal.
+    cat > "$DESKTOP/what-is-installed.bat" <<BATEOF
+@echo off
+chcp 65001 >nul 2>&1
+echo what-is-installed — scanning PATH...
+echo.
+bash -c "what-is-installed"
+echo.
+pause
+BATEOF
+    echo "  ✓  Desktop launcher → $DESKTOP/what-is-installed.bat"
+    echo
+    echo "  Double-click it in Explorer to run (requires Git Bash in PATH)."
+    echo "  Or just run 'what-is-installed' in your MinGW / Git Bash terminal."
     ;;
 
   *)

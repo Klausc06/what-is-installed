@@ -26,8 +26,21 @@ No dependencies. Works on macOS, Linux, BSD, and Windows (MinGW/Cygwin). Zero-co
 
 ## Quick Install
 
+### Prerequisites
+
+The only thing you need is **Bash** — it's built into macOS and Linux. Windows users need Git Bash (included with Git for Windows).
+
+| Platform | What you need | How to get it |
+|----------|--------------|---------------|
+| macOS | Nothing — Terminal is built-in | — |
+| Linux | Nothing — any terminal works | — |
+| Windows | **Git Bash** (NOT PowerShell, NOT CMD) | [git-scm.com](https://git-scm.com) — install Git for Windows, then launch "Git Bash" from Start Menu |
+
+### Install
+
+Open your terminal (or Git Bash on Windows) and run:
+
 ```bash
-# Works in any Bash terminal: macOS Terminal, Linux shell, Git Bash on Windows
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
@@ -37,8 +50,15 @@ That's it. You'll get:
 - `what-is-installed` symlinked to `~/.local/bin/`
 - **macOS**: A double-clickable `.command` launcher on your Desktop
 - **Linux**: A `.desktop` entry on your Desktop (detected via `xdg-user-dir`, works across locales)
-- **Windows**: A `.bat` launcher on your Desktop (requires Git Bash / MinGW in PATH)
-- **Other platforms**: Terminal-only; run `what-is-installed` directly
+- **Windows**: A `.bat` launcher on your Desktop
+
+### Verify
+
+```bash
+what-is-installed
+```
+
+If you see a colored table of your CLI tools, it's working. If you get "command not found", make sure `~/.local/bin` is in your PATH (the installer warns you if it isn't).
 
 ## Usage
 
@@ -137,8 +157,21 @@ MIT
 
 ## 快速安装
 
+### 前置依赖
+
+只需要 **Bash** — macOS 和 Linux 自带。Windows 用户需要 Git Bash（安装 Git for Windows 时自带）。
+
+| 平台 | 需要的工具 | 怎么获取 |
+|------|-----------|---------|
+| macOS | 不需要 — 终端自带 | — |
+| Linux | 不需要 — 任何终端都行 | — |
+| Windows | **Git Bash**（不是 PowerShell，不是 CMD） | [git-scm.com](https://git-scm.com) — 安装 Git for Windows，然后从开始菜单打开 "Git Bash" |
+
+### 安装
+
+打开终端（Windows 打开 Git Bash），运行：
+
 ```bash
-# 适用于任何 Bash 终端：macOS 终端、Linux shell、Windows Git Bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
@@ -148,8 +181,15 @@ cd what-is-installed
 - `what-is-installed` 软链接到 `~/.local/bin/`
 - **macOS**：桌面上一个双击即可运行的 `.command` 启动器
 - **Linux**：桌面上一个 `.desktop` 快捷方式（通过 `xdg-user-dir` 检测桌面路径，适配各种语言环境）
-- **Windows**：桌面上一个 `.bat` 启动器（需要 Git Bash / MinGW 在 PATH 中）
-- **其他平台**：仅终端模式；直接运行 `what-is-installed`
+- **Windows**：桌面上一个 `.bat` 启动器
+
+### 验证
+
+```bash
+what-is-installed
+```
+
+如果看到一张彩色表格列出你的 CLI 工具，就成功了。如果提示 "command not found"，检查 `~/.local/bin` 是否在 PATH 中（安装脚本会提示你）。
 
 ## 用法
 

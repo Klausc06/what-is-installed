@@ -38,16 +38,30 @@ The only thing you need is **Bash** — it's built into macOS and Linux. Windows
 
 ### Install
 
-Open your terminal and run:
+**macOS / Linux**
 
-**macOS / Linux / Git Bash on Windows:**
+Open Terminal and run:
+
 ```bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
 ```
 
-**PowerShell on Windows:**
+**Windows (Git Bash)**
+
+Open Git Bash from Start Menu and run:
+
+```bash
+git clone https://github.com/Klausc06/what-is-installed.git
+cd what-is-installed
+./install.sh
+```
+
+**Windows (PowerShell)**
+
+Open PowerShell and run:
+
 ```powershell
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
@@ -179,16 +193,30 @@ MIT
 
 ### 安装
 
+**macOS / Linux**
+
 打开终端，运行：
 
-**macOS / Linux / Windows Git Bash：**
 ```bash
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed
 ./install.sh
 ```
 
-**Windows PowerShell：**
+**Windows（Git Bash）**
+
+从开始菜单打开 Git Bash，运行：
+
+```bash
+git clone https://github.com/Klausc06/what-is-installed.git
+cd what-is-installed
+./install.sh
+```
+
+**Windows（PowerShell）**
+
+打开 PowerShell，运行：
+
 ```powershell
 git clone https://github.com/Klausc06/what-is-installed.git
 cd what-is-installed

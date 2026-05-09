@@ -1,4 +1,5 @@
 @echo off
+title what-is-installed
 echo what-is-installed - scanning PATH...
 echo.
 
@@ -14,9 +15,16 @@ if "%BASH%"=="" (
     exit /b 1
 )
 
-REM Ensure ~/.local/bin is in PATH for this session
-set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+REM Use bash's $HOME (CMD %USERPROFILE% doesn't map 1:1 in bash)
+set "SCRIPT=%USERPROFILE%\.local\bin\what-is-installed"
 
-"%BASH%" -c "what-is-installed"
+if not exist "%SCRIPT%" (
+    echo what-is-installed not found at %SCRIPT%
+    echo Run install.sh first: bash install.sh
+    pause
+    exit /b 1
+)
+
+"%BASH%" -c "\"$HOME/.local/bin/what-is-installed\""
 echo.
 pause

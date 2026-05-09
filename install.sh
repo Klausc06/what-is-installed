@@ -36,24 +36,61 @@ OS="$(detect_os)"
 echo "==> what-is-installed installer ($OS)"
 echo
 
-# ── symlink binary ──────────────────────────────────
+# ── install binary ──────────────────────────────────
 mkdir -p "$BIN_DIR"
-ln -sf "$ROOT/bin/what-is-installed" "$BIN_DIR/what-is-installed"
-echo "  ✓  what-is-installed → $BIN_DIR/what-is-installed"
+
+case "$OS" in
+  windows)
+    # On Windows, bash symlinks don't work in CMD/PowerShell.
+    # Copy the script and create a .bat wrapper so it works everywhere.
+    cp "$ROOT/bin/what-is-installed" "$BIN_DIR/what-is-installed"
+    cat > "$BIN_DIR/what-is-installed.bat" <<'BATEOF'
+@echo off
+title what-is-installed
+bash "%~dp0what-is-installed" %*
+echo.
+pause
+BATEOF
+    echo "  ✓  what-is-installed       → $BIN_DIR/what-is-installed"
+    echo "  ✓  what-is-installed.bat   → $BIN_DIR/what-is-installed.bat"
+    ;;
+  *)
+    ln -sf "$ROOT/bin/what-is-installed" "$BIN_DIR/what-is-installed"
+    echo "  ✓  what-is-installed → $BIN_DIR/what-is-installed"
+    ;;
+esac
 
 # ── PATH check ──────────────────────────────────────
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+if [[ ":${PATH}:" != *":${BIN_DIR}:"* ]]; then
   echo
-  echo "  ⚠  $BIN_DIR is not in your PATH."
   case "$OS" in
-    macos)   rc="$HOME/.zshrc" ;;
-    linux) rc="$HOME/.profile" ;;
-    windows) rc="$HOME/.bashrc" ;;
-    *)       rc="your shell profile" ;;
+    macos)
+      echo "  ⚠  $BIN_DIR is not in your PATH."
+      echo "     Add this to ~/.zshrc:"
+      echo '       export PATH="$HOME/.local/bin:$PATH"'
+      ;;
+    linux)
+      echo "  ⚠  $BIN_DIR is not in your PATH."
+      echo "     Add this to ~/.profile:"
+      echo '       export PATH="$HOME/.local/bin:$PATH"'
+      ;;
+    windows)
+      rc="$HOME/.bashrc"
+      if [[ -f "$rc" ]] && ! grep -q '$HOME/.local/bin' "$rc" 2>/dev/null; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc"
+        echo "  ⚠  Added $BIN_DIR to $rc"
+        echo "     Restart your Git Bash terminal for it to take effect."
+      else
+        echo "  ⚠  $BIN_DIR is not in your PATH."
+        echo "     Add this to $rc:"
+        echo '       export PATH="$HOME/.local/bin:$PATH"'
+      fi
+      ;;
+    *)
+      echo "  ⚠  $BIN_DIR is not in your PATH."
+      echo "     Add it to your shell profile."
+      ;;
   esac
-  echo "     Add this to $rc:"
-  echo
-  echo "       export PATH=\"\$HOME/.local/bin:\$PATH\""
   echo
 fi
 
@@ -91,8 +128,8 @@ DESKTOPEOF
     cp "$ROOT/launchers/what-is-installed.bat" "$DESKTOP/what-is-installed.bat"
     echo "  ✓  Desktop launcher → $DESKTOP/what-is-installed.bat"
     echo
-    echo "  Double-click it in Explorer to run (requires Git Bash in PATH)."
-    echo "  Or just run 'what-is-installed' in your MinGW / Git Bash terminal."
+    echo "  Double-click it in Explorer to run."
+    echo "  Or run 'what-is-installed' in Git Bash / CMD / PowerShell."
     ;;
 
   *)

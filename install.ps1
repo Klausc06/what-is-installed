@@ -27,20 +27,28 @@ Copy-Item -Path "$ScriptRoot\bin\what-is-installed" -Destination "$BinDir\what-i
 # Create a .bat wrapper so what-is-installed works from PowerShell / CMD / Run dialog
 $Wrapper = @"
 @echo off
+title what-is-installed
 bash "%~dp0what-is-installed" %*
+echo.
+pause
 "@
-Set-Content -Path "$BinDir\what-is-installed.bat" -Value $Wrapper -Encoding ASCII | Out-Null
-Write-Host "  ✓  what-is-installed → $BinDir\what-is-installed.bat"
+Set-Content -Path "$BinDir\what-is-installed.bat" -Value $Wrapper -Encoding ASCII -NoNewline | Out-Null
+Write-Host "  ✓  what-is-installed       → $BinDir\what-is-installed"
+Write-Host "  ✓  what-is-installed.bat   → $BinDir\what-is-installed.bat"
 
-# Check PATH
-if ($env:PATH -split ";" -notcontains $BinDir) {
+# Auto-add to user PATH (persistent, no admin required)
+$userPath = [Environment]::GetEnvironmentVariable("PATH", "User") ?? ""
+if ($userPath -split ";" -notcontains $BinDir) {
+    $newPath = if ($userPath) { "$userPath;$BinDir" } else { $BinDir }
+    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+    # Update current session too
+    $env:PATH = "$env:PATH;$BinDir"
     Write-Host ""
-    Write-Host "  ⚠  $BinDir is not in your PATH."
-    Write-Host "     Add it manually (System Properties → Environment Variables)"
-    Write-Host "     or run this in an admin PowerShell (safe to run multiple times):"
-    Write-Host '     $p = [Environment]::GetEnvironmentVariable("PATH","User"); if ($p -notlike "*' + $BinDir + '*") { [Environment]::SetEnvironmentVariable("PATH", "$p;' + $BinDir + '", "User") }'
+    Write-Host "  ✓  Added $BinDir to user PATH"
+    Write-Host "     New terminals will find 'what-is-installed' automatically."
+} else {
     Write-Host ""
-    Write-Host "     Then restart your terminal."
+    Write-Host "  ✓  $BinDir already in PATH"
 }
 
 # Desktop launcher

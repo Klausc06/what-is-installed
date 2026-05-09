@@ -16,7 +16,7 @@ get_system_dirs() {
     macos)        printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/System/|/Library/Apple/)' ;;
     linux)        printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/lib/systemd/)' ;;
     bsd)          printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/rescue/)' ;;
-    mingw|cygwin) printf '%s' '^(/c/Windows/)' ;;
+    mingw|cygwin) printf '%s' '^(/c/Windows/|/proc/|/usr/bin|/usr/lib/git-core)' ;;
     *)            printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin)' ;;
   esac
 }
@@ -68,6 +68,9 @@ section_label() {
       case "$1" in
         */.local/bin)      printf '%s' 'User Local' ;;
         */usr/local/bin|*/usr/local/sbin) printf '%s' 'System Local' ;;
+        */mingw64/bin|*/mingw32/bin) printf '%s' 'MinGW' ;;
+        */clang64/bin|*/ucrt64/bin)  printf '%s' 'MinGW' ;;
+        */mingw*/bin)       printf '%s' 'MinGW' ;;
         *)                 printf '%s' 'Other' ;;
       esac
       ;;

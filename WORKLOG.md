@@ -71,3 +71,13 @@ Previously uncommitted changes from 2026-05-08 session, committed by Hermes:
 - All tests passing, syntax check clean
 
 30 commits on main, working tree clean.
+
+### `e4afe89` — docs: rewrite README (Hermes)
+
+Complete rewrite from the old Chinese-only output example to a modern English README:
+- Full feature list: PATH scanning, version detection, dedup, caching, filtering, sorting, multi-format
+- Quick install via git clone + symlink
+- All CLI flags documented with examples
+- Platform support table (macOS/Linux/BSD/MinGW/Cygwin)
+- Architecture diagram
+- Sample output showing the current box-drawing table layout

@@ -20,7 +20,7 @@ jobs:
         run: choco install shellcheck -y
 
       - name: shellcheck
-        run: shellcheck bin/what-is-installed lib/platform.sh lib/render.sh install.sh
+        run: shellcheck --severity=error bin/what-is-installed lib/platform.sh lib/render.sh install.sh
 
       - name: Run tests
         run: bash tests/run.sh

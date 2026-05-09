@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 detect_os() {
   case "$(uname -s)" in
     Darwin)         printf '%s' 'macos' ;;

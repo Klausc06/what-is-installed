@@ -84,4 +84,4 @@ Fixes in `1da7be3`:
 
 ## Current State
 
-66 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+68 commits on main. Clean tree. 0 shellcheck bugs. All tests pass. Windows CI active (shellcheck + tests on windows-latest).

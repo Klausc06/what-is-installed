@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Reserved: render_json, render_csv, render_plain, dispatch_render are
 # not currently called (render_table is used directly) but kept for future use.
 setup_glyphs() {

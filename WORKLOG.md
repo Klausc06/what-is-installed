@@ -135,6 +135,16 @@ Three sub-agents reviewed all code. 12 bugs fixed:
 
 59 commits. Tests pass, shellcheck clean.
 
+### `5b9a659` — fix: remaining LOW issues (Hermes)
+
+- Family dedup: `%%[0-9]*` strips trailing digits for names like `python3.11`
+- Version regex: `{1,2}` supports 2-4 semver components, `+` rejects bare integers
+- Dead code: `render_json`/`csv`/`plain`/`dispatch_render` marked as reserved
+- DragonFly BSD + Linuxbrew detection in platform.sh
+- install.ps1 PATH add command now idempotent (guards against double-add)
+
+61 commits. All 3-agent review issues resolved (12 HIGH/MEDIUM + 4 LOW).
+
 ### `ace0767` — `376222f` — docs: Built With / 致谢 section
 
 Added acknowledgments section in both English and Chinese, listing all tools used:

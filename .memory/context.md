@@ -4,10 +4,10 @@
 - `main` — primary development branch
 
 ## Current State
-- 30 commits (2026-05-10, Hermes committed prior session work)
+- 61 commits (2026-05-10, Hermes: 3-agent review complete, 16 issues resolved)
 - Working tree clean
 - Shell script project at ~/Documents/Projects/what-is-installed
-- 679 LOC (bin/what-is-installed 353, lib/platform.sh 79, lib/render.sh 247)
+- 679 LOC (bin/what-is-installed 270, lib/platform.sh 83, lib/render.sh 246)
 - 136 LOC tests (tests/run.sh, all passing)
 - Desktop launcher at ~/Desktop/what-is-installed.command (18 lines, Finder double-click compatible)
 - Git remote is configured; verify current owner/upstream with `git remote -v` before publishing or reporting.

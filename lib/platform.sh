@@ -16,7 +16,7 @@ get_system_dirs() {
     macos)        printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/System/|/Library/Apple/)' ;;
     linux)        printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/lib/systemd/)' ;;
     bsd)          printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin|/rescue/)' ;;
-    mingw|cygwin) printf '%s' '^(/c/Windows/|/proc/|/usr/bin|/usr/lib/git-core)' ;;
+    mingw|cygwin) printf '%s' '^(/c/Windows/|/proc/|/usr/bin|/usr/lib/git-core|/mingw)' ;;
     *)            printf '%s' '^(/bin|/sbin|/usr/bin|/usr/sbin)' ;;
   esac
 }

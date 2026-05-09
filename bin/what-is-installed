@@ -107,24 +107,41 @@ load_cache() {
 }
 
 run_with_timeout() {
-  local timeout="${1:-2}" tmpfile pid killer exit_code
+  local timeout="${1:-2}" tmpfile pid exit_code waited
   shift
   tmpfile="$(mktemp)"
-  "$@" >"$tmpfile" 2>/dev/null &
-  pid=$!
-  { sleep "$timeout"; kill "$pid" 2>/dev/null; } &
-  killer=$!
-  wait "$pid" 2>/dev/null
-  exit_code=$?
-  kill "$killer" 2>/dev/null
-  wait "$killer" 2>/dev/null
-  if [[ $exit_code -eq 143 || $exit_code -eq 137 ]]; then
+
+  # Prefer GNU timeout if available (fast, reliable across platforms)
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$timeout" "$@" >"$tmpfile" 2>/dev/null
+    exit_code=$?
+  else
+    # Fallback: foreground polling loop — no background kill needed
+    # (background { sleep; kill; } & fails on Windows Git Bash)
+    "$@" >"$tmpfile" 2>/dev/null &
+    pid=$!
+    waited=0
+    while kill -0 "$pid" 2>/dev/null && [[ $waited -lt $timeout ]]; do
+      sleep 1
+      ((waited++))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      rm -f "$tmpfile"
+      return 124
+    fi
+    wait "$pid" 2>/dev/null
+    exit_code=$?
+  fi
+
+  if [[ $exit_code -eq 124 || $exit_code -eq 143 || $exit_code -eq 137 ]]; then
     rm -f "$tmpfile"
     return 124
   fi
   tr -d '\0' <"$tmpfile" 2>/dev/null
   rm -f "$tmpfile"
-  return $exit_code
+  return ${exit_code:-0}
 }
 
 VERSION_RESULT=""
@@ -273,7 +290,9 @@ for dir in "${PATH_DIRS[@]}"; do
     ALL_SECTION_START+=("$section_items_before")
     ALL_SECTION_COUNTS+=("$count")
   fi
+  printf '.' >&2
 done
+printf '\n' >&2
 
 write_cache || true
 

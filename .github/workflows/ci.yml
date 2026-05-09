@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Strip CR (safety net for CRLF)
-        run: sed -i 's/\r$//' bin/what-is-installed lib/platform.sh lib/render.sh install.sh tests/run.sh
+        run: sed -i 's/\r$//' bin/what-is-installed lib/platform.sh lib/render.sh install.sh
 
       - name: Install shellcheck
         run: choco install shellcheck -y

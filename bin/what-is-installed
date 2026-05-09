@@ -33,6 +33,12 @@ SORT_FIELD=""
 NO_CACHE=""
 INCLUDE_SYSTEM=""
 
+die_usage() {
+  printf '%s\n' "$1" >&2
+  usage >&2
+  exit 1
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --help|-h)            usage; exit 0 ;;
@@ -41,8 +47,19 @@ while [[ $# -gt 0 ]]; do
     --csv)                OUTPUT_FORMAT="csv"; shift ;;
     --plain)              OUTPUT_FORMAT="plain"; shift ;;
     --ascii)              ASCII_MODE=1; shift ;;
-    --filter)             FILTER="$2"; shift 2 ;;
-    --sort)               SORT_FIELD="$2"; shift 2 ;;
+    --filter)
+      [[ $# -ge 2 && "${2:-}" != --* ]] || die_usage "Missing value for --filter"
+      FILTER="$2"
+      shift 2
+      ;;
+    --sort)
+      [[ $# -ge 2 && "${2:-}" != --* ]] || die_usage "Missing value for --sort"
+      case "$2" in
+        name|version|path) SORT_FIELD="$2" ;;
+        *) die_usage "Invalid --sort value: $2" ;;
+      esac
+      shift 2
+      ;;
     --no-cache)           NO_CACHE=1; shift ;;
     --include-system|-a)  INCLUDE_SYSTEM=1; shift ;;
     *)                    printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
@@ -70,26 +87,80 @@ repeat_char() {
   printf '%s' "$out"
 }
 
-CACHE_NAMES=("")
-CACHE_VALS=("")
+CACHE_NAMES=()
+CACHE_VALS=()
+
+escape_cache_field() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//$'\t'/\\t}"
+  value="${value//$'\r'/\\r}"
+  value="${value//$'\n'/\\n}"
+  printf '%s' "$value"
+}
+
+unescape_cache_field() {
+  local value="$1" out="" i=0 char next
+  while [[ $i -lt ${#value} ]]; do
+    char="${value:$i:1}"
+    if [[ "$char" == '\' && $((i + 1)) -lt ${#value} ]]; then
+      next="${value:$((i + 1)):1}"
+      case "$next" in
+        t) out+=$'\t' ;;
+        r) out+=$'\r' ;;
+        n) out+=$'\n' ;;
+        '\') out+='\' ;;
+        *) out+="\\$next" ;;
+      esac
+      i=$((i + 2))
+    else
+      out+="$char"
+      i=$((i + 1))
+    fi
+  done
+  printf '%s' "$out"
+}
 
 write_cache() {
   local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed"
+  local i
   mkdir -p "$cache_dir"
   {
-    printf 'CACHE_TS=%s\n' "$(date +%s)"
-    declare -p CACHE_NAMES 2>/dev/null
-    declare -p CACHE_VALS 2>/dev/null
+    printf 'ts\t%s\n' "$(date +%s)"
+    if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
+      for i in "${!CACHE_NAMES[@]}"; do
+        printf 'entry\t%s\t%s\n' \
+          "$(escape_cache_field "${CACHE_NAMES[$i]}")" \
+          "$(escape_cache_field "${CACHE_VALS[$i]}")"
+      done
+    fi
   } > "$cache_dir/versions.cache"
 }
 
 load_cache() {
   local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed/versions.cache"
   [[ -f "$cache_file" ]] || return 1
-  local now
+  local now cache_ts="" kind name val
   now=$(date +%s)
-  source "$cache_file" 2>/dev/null || return 1
-  [[ -n "${CACHE_TS:-}" && $(( now - CACHE_TS )) -lt 3600 ]] || return 1
+
+  CACHE_NAMES=()
+  CACHE_VALS=()
+
+  while IFS=$'\t' read -r kind name val _; do
+    case "$kind" in
+      ts)
+        [[ "${name:-}" =~ ^[0-9]+$ ]] || return 1
+        cache_ts="$name"
+        ;;
+      entry)
+        [[ -n "$cache_ts" && -n "${name:-}" ]] || continue
+        CACHE_NAMES+=("$(unescape_cache_field "$name")")
+        CACHE_VALS+=("$(unescape_cache_field "${val:-}")")
+        ;;
+    esac
+  done < "$cache_file"
+
+  [[ -n "$cache_ts" && $(( now - cache_ts )) -lt 3600 ]] || return 1
 }
 
 run_with_timeout() {
@@ -118,9 +189,11 @@ VERSION_RESULT=""
 get_command_version() {
   local cmd="$1" env_prefix output first_line i
 
-  for i in "${!CACHE_NAMES[@]}"; do
-    [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
-  done
+  if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
+    for i in "${!CACHE_NAMES[@]}"; do
+      [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
+    done
+  fi
 
   env_prefix="$(get_accel_env "$cmd")"
 
@@ -160,6 +233,7 @@ get_command_version() {
 SEEN_NAMES=("")
 SEEN_FAMILIES=("")
 SEEN_VERSIONS=("")
+SEEN_PATH_DIRS=()
 
 ALL_SECTION_DIRS=()
 ALL_SECTION_ITEMS=()
@@ -169,7 +243,23 @@ ALL_SECTION_START=()
 SYSTEM_DIRS="$(get_system_dirs)"
 FAMILY_SKIP="$(get_family_skip_patterns)"
 
-while IFS= read -r dir; do
+PATH_DIRS=()
+OLD_IFS="$IFS"
+IFS=':'
+for dir in $PATH; do
+  duplicate_dir=false
+  if [[ ${#SEEN_PATH_DIRS[@]} -gt 0 ]]; then
+    for seen_dir in "${SEEN_PATH_DIRS[@]}"; do
+      [[ "$seen_dir" == "$dir" ]] && { duplicate_dir=true; break; }
+    done
+  fi
+  [[ "$duplicate_dir" == true ]] && continue
+  SEEN_PATH_DIRS+=("$dir")
+  PATH_DIRS+=("$dir")
+done
+IFS="$OLD_IFS"
+
+for dir in "${PATH_DIRS[@]}"; do
   if [[ -z "$INCLUDE_SYSTEM" ]]; then
     [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
   else
@@ -233,7 +323,7 @@ while IFS= read -r dir; do
     ALL_SECTION_START+=("$section_items_before")
     ALL_SECTION_COUNTS+=("$count")
   fi
-done < <(printf '%s\n' "$PATH" | tr ':' '\n' | sort -u)
+done
 
 if [[ -n "${SORT_FIELD:-}" && "$SORT_FIELD" != "name" ]]; then
   for si in "${!ALL_SECTION_DIRS[@]}"; do

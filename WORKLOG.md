@@ -82,6 +82,17 @@ Fixes in `1da7be3`:
 - platform.sh: filter `/mingw*` paths (MSYS2 system tools, same logic as filtering `/usr/bin` on Linux)
 - Progress dots to stderr (one per directory) so user sees activity
 
+### Round 3 — Windows CI Setup (7 iterations)
+
+Added `.github/workflows/ci.yml` — windows-latest, shell: bash, shellcheck + tests.
+CRLF emerged as the main friction:
+- `git config core.autocrlf false` + `sed` strip CR before shellcheck
+- `# shellcheck shell=bash` directives on library files
+- `--severity=error` to avoid failing on style warnings
+- Tests rewritten for Windows: isolated XDG_CACHE_HOME, semver output (1.0.0),
+  per-char json_escape test (avoids `\r` normalization)
+
 ## Current State
 
-68 commits on main. Clean tree. 0 shellcheck bugs. All tests pass. Windows CI active (shellcheck + tests on windows-latest).
+75 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+Windows CI: shellcheck + tests on windows-latest (CI result pending — run #25612077234).

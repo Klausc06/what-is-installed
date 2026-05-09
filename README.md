@@ -97,6 +97,20 @@ lib/platform.sh           # OS detection, system dirs, category labels (79 lines
 lib/render.sh             # Table/JSON/CSV/plain rendering, colors, cache escaping (247 lines)
 ```
 
+## Built With
+
+Built with tools this project itself can inventory —
+
+[Hermes](https://github.com/nousresearch/hermes-agent) ·
+[Claude Code](https://claude.ai) ·
+[Codex](https://github.com/openai/codex) ·
+[OpenCode](https://github.com/anthropics/opencode) ·
+[WorkBuddy](https://workbuddy.dev) ·
+[free-claude-code](https://github.com/Klausc06/free-claude-code) ·
+[DeepSeek](https://deepseek.com) ·
+[Homebrew](https://brew.sh) ·
+Bash
+
 ## License
 
 MIT
@@ -195,6 +209,20 @@ bin/what-is-installed     # 主脚本（353 行）
 lib/platform.sh           # 系统检测、系统目录、分类标签（79 行）
 lib/render.sh             # 表格/JSON/CSV/纯文本渲染、颜色、缓存转义（247 行）
 ```
+
+## 致谢
+
+本项目由以下工具共同打造——
+
+[Hermes](https://github.com/nousresearch/hermes-agent) ·
+[Claude Code](https://claude.ai) ·
+[Codex](https://github.com/openai/codex) ·
+[OpenCode](https://github.com/anthropics/opencode) ·
+[WorkBuddy](https://workbuddy.dev) ·
+[free-claude-code](https://github.com/Klausc06/free-claude-code) ·
+[DeepSeek](https://deepseek.com) ·
+[Homebrew](https://brew.sh) ·
+Bash
 
 ## 许可证
 

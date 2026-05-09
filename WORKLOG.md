@@ -128,6 +128,14 @@ Now all three major platforms have Desktop launchers: .command (macOS), .desktop
 Added acknowledgments section in both English and Chinese, listing all tools used:
 Hermes, Claude Code, Codex, DeepSeek, OpenCode, WorkBuddy, free-claude-code, Homebrew, Bash.
 
+### Xiaohongshu launch
+
+Created cover image (1080×1440, light terminal theme) and published promotional post:
+- Title: "装了多少命令行工具？跑一下这个就知道了"
+- Content with install instructions, GitHub link, 27 tags
+- Cover HTML at `~/Desktop/what-is-installed-cover.html`
+- Posted via xiaohongshu-mcp at localhost:18060
+
 ---
 
 ## 2026-05-10 — Hermes Final Review

@@ -103,6 +103,16 @@ Created `install.sh` that does everything in one command:
 
 User experience: `git clone && cd && ./install.sh` — done. Desktop icon appears.
 
+### `b7a58f7` — feat: cross-platform Desktop launcher detection (Hermes)
+
+Replaced hardcoded `~/Desktop` with `xdg-user-dir DESKTOP` (Linux locale-safe) +
+fallback chain (`~/Desktop`, `~/桌面`, `$HOME`). Platform-specific launchers:
+- macOS: `.command` file (Finder double-click)
+- Linux: `.desktop` entry (freedesktop.org standard, `Terminal=true`)
+- Other: terminal-only, graceful skip
+
+Added `launchers/what-is-installed.desktop` template to repo.
+
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation

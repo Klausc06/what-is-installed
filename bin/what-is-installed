@@ -112,7 +112,7 @@ run_with_timeout() {
     rm -f "$tmpfile"
     return 124
   fi
-  cat "$tmpfile"
+  tr -d '\0' <"$tmpfile"
   rm -f "$tmpfile"
   return $exit_code
 }

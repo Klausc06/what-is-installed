@@ -82,6 +82,17 @@ Complete rewrite from the old Chinese-only output example to a modern English RE
 - Architecture diagram
 - Sample output showing the current box-drawing table layout
 
+### `65135ce` — refactor: remove all CLI options (Hermes)
+
+Stripped all flags: --help, --no-color, --json, --csv, --plain, --ascii, --filter,
+--sort, --no-cache, --include-system. The tool now has zero options — just run it.
+- Removed usage(), die_usage(), flag parsing, OUTPUT_FORMAT dispatch
+- Cache is always on (transparent), colors auto-detect terminal, system dirs always filtered
+- Tests simplified: removed filter/sort tests, kept PATH order + cache safety + escape helpers
+- `42eebc7`: README updated to reflect flagless design (both English and Chinese)
+
+Lines: 353 → 258 in bin/what-is-installed (-95)
+
 ### `03561c5` — docs: bilingual README with language switcher (Hermes)
 
 Added `[English](#english) | [中文](#中文)` toggle bar at top. Full Chinese translation

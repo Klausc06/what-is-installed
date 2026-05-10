@@ -33,80 +33,6 @@ repeat_char() {
 CACHE_NAMES=()
 CACHE_VALS=()
 
-escape_cache_field() {
-  local value="$1"
-  value="${value//\\/\\\\}"
-  value="${value//$'\t'/\\t}"
-  value="${value//$'\r'/\\r}"
-  value="${value//$'\n'/\\n}"
-  printf '%s' "$value"
-}
-
-unescape_cache_field() {
-  local value="$1" out="" i=0 char next
-  while [[ $i -lt ${#value} ]]; do
-    char="${value:$i:1}"
-    if [[ "$char" == '\' && $((i + 1)) -lt ${#value} ]]; then
-      next="${value:$((i + 1)):1}"
-      case "$next" in
-        t) out+=$'\t' ;;
-        r) out+=$'\r' ;;
-        n) out+=$'\n' ;;
-        '\') out+='\' ;;
-        *) out+="\\$next" ;;
-      esac
-      i=$((i + 2))
-    else
-      out+="$char"
-      i=$((i + 1))
-    fi
-  done
-  printf '%s' "$out"
-}
-
-write_cache() {
-  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed"
-  local i tmp
-  mkdir -p "$cache_dir"
-  tmp="$(mktemp "$cache_dir/.versions.XXXXXX")"
-  {
-    printf 'ts\t%s\n' "$(date +%s)"
-    if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
-      for i in "${!CACHE_NAMES[@]}"; do
-        printf 'entry\t%s\t%s\n' \
-          "$(escape_cache_field "${CACHE_NAMES[$i]}")" \
-          "$(escape_cache_field "${CACHE_VALS[$i]}")"
-      done
-    fi
-  } > "$tmp" && mv "$tmp" "$cache_dir/versions.cache"
-}
-
-load_cache() {
-  local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/what-is-installed/versions.cache"
-  [[ -f "$cache_file" ]] || return 1
-  local now cache_ts="" kind name val
-  now=$(date +%s)
-
-  CACHE_NAMES=()
-  CACHE_VALS=()
-
-  while IFS=$'\t' read -r kind name val _; do
-    case "$kind" in
-      ts)
-        [[ "${name:-}" =~ ^[0-9]+$ ]] || return 1
-        cache_ts="$name"
-        ;;
-      entry)
-        [[ -n "$cache_ts" && -n "${name:-}" ]] || continue
-        CACHE_NAMES+=("$(unescape_cache_field "$name")")
-        CACHE_VALS+=("$(unescape_cache_field "${val:-}")")
-        ;;
-    esac
-  done < "$cache_file"
-
-  [[ -n "$cache_ts" && $(( now - cache_ts )) -lt 3600 ]] || return 1
-}
-
 run_with_timeout() {
   local timeout="${1:-2}" tmpfile pid exit_code waited
   shift
@@ -200,14 +126,7 @@ NO_COLOR="${NO_COLOR:-}" ASCII_MODE="${ASCII_MODE:-}"
 setup_colors
 setup_glyphs
 
-FIRST_RUN=false
-load_cache || FIRST_RUN=true
 resolve_providers
-
-if $FIRST_RUN; then
-  echo "  (first run — probing versions, may take a few seconds...)" >&2
-  echo >&2
-fi
 
 SEEN_NAMES=()
 SEEN_FAMILIES=()
@@ -308,7 +227,6 @@ for dir in "${PATH_DIRS[@]}"; do
 done
 
 [[ ${_PROBE_COUNT:-0} -gt 0 ]] && printf '\n' >&2
-write_cache || true
 
 # ── render ──────────────────────────────────────────────
 

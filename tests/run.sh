@@ -41,47 +41,6 @@ test_path_order_keeps_first_directory() {
   [[ "$d1_line" -lt 999 && "$d1_line" -lt "$d2_path_line" ]] || fail "PATH directory order should be preserved"
 }
 
-test_cache_writes_and_is_safe() {
-  local bin="$ROOT/bin/what-is-installed"
-  local d1 cache cache_file marker content
-
-  d1="$(mktemp -d)"
-  cache="$(mktemp -d)"
-  trap "rm -rf $d1 $cache" RETURN
-
-  printf '#!/usr/bin/env bash\necho "1.0.0"\n' > "$d1/cachetool"
-  chmod +x "$d1/cachetool"
-
-  # Run once to populate cache
-  XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null >/dev/null
-
-  # Verify cache was written
-  cache_file="$cache/what-is-installed/versions.cache"
-  [[ -f "$cache_file" ]] || fail "cache file should exist after first run"
-
-  content="$(cat "$cache_file")"
-  [[ "$content" == *"cachetool"* ]] || fail "cache should contain cachetool"
-
-  # Second run should use cache (fast)
-  out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null)"
-  [[ "$out" == *"cachetool"* ]] || fail "cached run should show cachetool"
-
-  # Poison: executable code in cache must NOT execute
-  rm -rf "$cache"
-  mkdir -p "$(dirname "$cache_file")"
-  marker="/tmp/hermes_test_cache_ran_$$"
-  rm -f "$marker"
-  {
-    printf 'ts\t%s\n' "$(date +%s)"
-    printf 'entry\tfoo\tbar\n'
-    printf '#!/usr/bin/env bash\necho EXPLOITED > %s\n' "$marker"
-  } > "$cache_file"
-
-  XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:/usr/bin:/bin" bash "$bin" 2>/dev/null >/dev/null || true
-  assert_not_exists "$marker" "cache loader must not execute cache contents"
-  rm -f "$marker"
-}
-
 test_json_and_csv_helpers() {
   source "$ROOT/lib/render.sh"
 
@@ -104,7 +63,6 @@ test_json_and_csv_helpers() {
 }
 
 test_path_order_keeps_first_directory
-test_cache_writes_and_is_safe
 test_json_and_csv_helpers
 
 [[ $FAIL -eq 0 ]] && printf 'ok - all tests passed\n'

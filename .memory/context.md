@@ -4,9 +4,9 @@
 - `main` — primary development branch
 
 ## Current State
-- 82 commits (2026-05-10) — Phase 1+2+5 perf optimizations landed
+- 83 commits (2026-05-10) — disk cache removed, provider-only model — Phase 1+2+5 perf optimizations landed
 - Working tree clean
-- 0 shellcheck bugs, all tests pass
+- 0 shellcheck bugs, 2 tests pass (cache test removed with disk cache)
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests)
 - CRLF safety: git config core.autocrlf=false, sed strip before shellcheck
 - Canonical repo path: `/Users/klaus/Documents/Projects/what-is-installed`
@@ -27,7 +27,7 @@
 ## Performance Architecture
 - **Provider layer** (`lib/providers.sh`): brew + cargo bulk version queries pre-populate cache
 - **Filter-before-probe**: dedup, skip patterns, blocklist checked before version probing
-- **Two-tier cache** (planned): provider data 24h TTL, PATH scan 1h TTL
+- **No disk cache**: every run is a fresh snapshot; speed comes from `brew list --versions` bulk queries
 
 ## Key Design Decisions
 - Zero CLI options — no flags, no config, just run it

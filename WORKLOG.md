@@ -107,6 +107,13 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 - Backup retains `.git`, `.review-reports/`, and `tests/run-extended.sh` for auditability.
 - Local entrypoints should point to the canonical project, not the archived clone.
 
+### Disk Cache Removal
+
+- Removed `load_cache`, `write_cache`, `escape_cache_field`, `unescape_cache_field`, FIRST_RUN.
+- Disk cache was hiding staleness (1hr TTL) and the TSV I/O was complex.
+- Provider-driven model is simpler: `brew list --versions` + `cargo install --list` populate memory arrays at every run.
+- Result is always current; speed comes from bulk queries instead of cached snapshots.
+
 ### Performance Optimization (Phase 1+2+5)
 
 - **Phase 1**: Reordered filter before probe — SEEN_NAMES, FAMILY_SKIP, *-config/*.py checks now run before get_command_version(), eliminating wasted version probing for commands that would be skipped.
@@ -115,5 +122,5 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 
 ## Current State
 
-82 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+83 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

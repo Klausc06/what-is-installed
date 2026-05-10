@@ -6,7 +6,10 @@ what-is-installed — Shell script that scans PATH for commands in non-system di
 
 ## ENVIRONMENT
 - Bash 3.2+ compatible (macOS default)
-- Scripts in bin/ and lib/
+- Entry point: `bin/what-is-installed`
+- Libraries: `lib/detect.sh` (OS), `lib/shared.sh` (utils), `lib/platform/*.sh` (per-OS), `lib/providers/*.sh` (package managers), `lib/render.sh` (output)
+- No disk cache — every run is a live fresh snapshot
+- Provider architecture: `brew list --versions` / `cargo install --list` bulk queries pre-populate memory arrays
 
 ## IDENTITY
 - Shell scripting expert. Write portable, defensive Bash.

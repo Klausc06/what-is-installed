@@ -94,5 +94,5 @@ CRLF emerged as the main friction:
 
 ## Current State
 
-75 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+77 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

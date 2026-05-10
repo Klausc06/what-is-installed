@@ -13,6 +13,7 @@ done
 SCRIPT_DIR="$(cd "$(dirname "$real")" && pwd)"
 source "$SCRIPT_DIR/../lib/platform.sh"
 source "$SCRIPT_DIR/../lib/render.sh"
+source "$SCRIPT_DIR/../lib/providers.sh"
 
 short_path() {
   local p="$1"
@@ -186,6 +187,11 @@ get_command_version() {
   CACHE_NAMES+=("$cmd")
   CACHE_VALS+=("$result")
   VERSION_RESULT="$result"
+
+  _PROBE_COUNT=$(( ${_PROBE_COUNT:-0} + 1 ))
+  if [[ $(( _PROBE_COUNT % 20 )) -eq 0 ]]; then
+    printf '.' >&2
+  fi
 }
 
 # ── main ──────────────────────────────────────────────
@@ -196,6 +202,7 @@ setup_glyphs
 
 FIRST_RUN=false
 load_cache || FIRST_RUN=true
+resolve_providers
 
 if $FIRST_RUN; then
   echo "  (first run — probing versions, may take a few seconds...)" >&2
@@ -206,6 +213,7 @@ SEEN_NAMES=()
 SEEN_FAMILIES=()
 SEEN_VERSIONS=()
 SEEN_PATH_DIRS=()
+_PROBE_COUNT=0
 
 ALL_SECTION_DIRS=()
 ALL_SECTION_ITEMS=()
@@ -245,10 +253,7 @@ for dir in "${PATH_DIRS[@]}"; do
 
     name="${path##*/}"
 
-    get_command_version "$name"
-    ver="$VERSION_RESULT"
-    [[ "$ver" == "-" ]] && continue
-
+    # Filter 1: Name dedup
     found=false
     if [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
       for seen in "${SEEN_NAMES[@]}"; do
@@ -257,9 +262,27 @@ for dir in "${PATH_DIRS[@]}"; do
     fi
     [[ "$found" == true ]] && continue
 
+    # Filter 2: Architecture suffix skip
+    if [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]]; then
+      continue
+    fi
+
+    # Filter 3: Blocklist patterns
+    case "$name" in
+      *-config|*.py) continue ;;
+    esac
+
+    # Filter 4: Extract family prefix
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
     [[ "$family" == "$name" ]] && family=""
+
+    # Now probe version — only for commands that passed ALL filters
+    get_command_version "$name"
+    ver="$VERSION_RESULT"
+    [[ "$ver" == "-" ]] && continue
+
+    # Filter 5: Family+version dedup (needs version from probe)
     if [[ -n "$family" ]]; then
       skip=false
       for j in "${!SEEN_FAMILIES[@]}"; do
@@ -267,14 +290,6 @@ for dir in "${PATH_DIRS[@]}"; do
       done
       [[ "$skip" == true ]] && continue
     fi
-
-    if [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]]; then
-      continue
-    fi
-
-    case "$name" in
-      *-config|*.py) continue ;;
-    esac
 
     SEEN_NAMES+=("$name")
     [[ -n "$family" ]] && { SEEN_FAMILIES+=("$family"); SEEN_VERSIONS+=("$ver"); }
@@ -290,10 +305,9 @@ for dir in "${PATH_DIRS[@]}"; do
     ALL_SECTION_START+=("$section_items_before")
     ALL_SECTION_COUNTS+=("$count")
   fi
-  printf '.' >&2
 done
-printf '\n' >&2
 
+[[ ${_PROBE_COUNT:-0} -gt 0 ]] && printf '\n' >&2
 write_cache || true
 
 # ── render ──────────────────────────────────────────────

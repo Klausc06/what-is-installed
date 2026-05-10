@@ -92,7 +92,15 @@ CRLF emerged as the main friction:
 - Tests rewritten for Windows: isolated XDG_CACHE_HOME, semver output (1.0.0),
   per-char json_escape test (avoids `\r` normalization)
 
+### Round 4 — External Review Fixes
+
+6-report external audit caught 2 HIGH findings missed by all prior reviews:
+- **`eval "$(brew shellenv)"` injection** in macOS launcher — replaced with hardcoded PATH
+- **stderr discarded** in `run_with_timeout` — Java/Python tools silently skipped; changed `2>/dev/null` → `2>&1`
+
+Other findings (JSON/CSV dead code, shellcheck unused vars) already known / intentional.
+
 ## Current State
 
-77 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+79 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

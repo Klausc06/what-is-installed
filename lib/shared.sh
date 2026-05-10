@@ -26,8 +26,15 @@ run_with_timeout() {
   tmpfile="$(mktemp)"
 
   # Prefer GNU timeout if available (fast, reliable across platforms)
+  # macOS Homebrew installs it as gtimeout (coreutils)
+  local timeout_cmd=""
   if command -v timeout >/dev/null 2>&1; then
-    timeout "$timeout" "$@" >"$tmpfile" 2>&1
+    timeout_cmd="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    timeout_cmd="gtimeout"
+  fi
+  if [[ -n "$timeout_cmd" ]]; then
+    "$timeout_cmd" "$timeout" "$@" >"$tmpfile" 2>&1
     exit_code=$?
   else
     # Fallback: foreground polling loop — no background kill needed

@@ -69,13 +69,24 @@ get_command_version() {
 
   env_prefix="$(get_accel_env "$cmd")"
 
+  local ec tmpout
+  tmpout="$(mktemp)"
   if [[ -n "$env_prefix" ]]; then
-    output="$(run_with_timeout 1 env $env_prefix "$cmd" --version)" || true
-    [[ -z "$output" ]] && output="$(run_with_timeout 1 env $env_prefix "$cmd" -V)" || true
+    run_with_timeout 1 env $env_prefix "$cmd" --version >"$tmpout" 2>&1 && ec=0 || ec=$?
   else
-    output="$(run_with_timeout 1 "$cmd" --version)" || true
-    [[ -z "$output" ]] && output="$(run_with_timeout 1 "$cmd" -V)" || true
+    run_with_timeout 1 "$cmd" --version >"$tmpout" 2>&1 && ec=0 || ec=$?
   fi
+  output="$(tr -d '\0' <"$tmpout" 2>/dev/null)"
+  # Timeout: skip -V fallback, mark unknown immediately
+  if [[ "$ec" -ne 124 && -z "$output" ]]; then
+    if [[ -n "$env_prefix" ]]; then
+      run_with_timeout 1 env $env_prefix "$cmd" -V >"$tmpout" 2>&1 && ec=0 || ec=$?
+    else
+      run_with_timeout 1 "$cmd" -V >"$tmpout" 2>&1 && ec=0 || ec=$?
+    fi
+    output="$(tr -d '\0' <"$tmpout" 2>/dev/null)"
+  fi
+  rm -f "$tmpout"
 
   local result
   if [[ -z "$output" ]]; then

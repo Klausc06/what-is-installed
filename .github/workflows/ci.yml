@@ -20,13 +20,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Strip CR (safety net for CRLF)
-        run: sed -i 's/\r$//' bin/what-is-installed lib/platform.sh lib/render.sh install.sh
+        run: sed -i 's/\r$//' bin/what-is-installed lib/*.sh lib/platform/*.sh lib/providers/*.sh install.sh
 
       - name: Install shellcheck
         run: choco install shellcheck -y
 
       - name: shellcheck
-        run: shellcheck --severity=error bin/what-is-installed lib/platform.sh lib/render.sh install.sh
+        run: shellcheck --severity=error bin/what-is-installed lib/*.sh lib/platform/*.sh lib/providers/*.sh install.sh
 
       - name: Run tests
         run: bash tests/run.sh

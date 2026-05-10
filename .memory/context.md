@@ -4,7 +4,7 @@
 - `main` — primary development branch
 
 ## Current State
-- 80 commits (2026-05-10)
+- 82 commits (2026-05-10) — Phase 1+2+5 perf optimizations landed
 - Working tree clean
 - 0 shellcheck bugs, all tests pass
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests)
@@ -23,6 +23,11 @@
 - `/mingw*`, `/c/Windows/*`, `/proc`, `/usr/bin`, `/usr/lib/git-core` filtered
 - install.sh on Windows: copies script + creates .bat wrapper (no symlinks)
 - PowerShell: needs .bat wrapper, PATH via registry (SetEnvironmentVariable)
+
+## Performance Architecture
+- **Provider layer** (`lib/providers.sh`): brew + cargo bulk version queries pre-populate cache
+- **Filter-before-probe**: dedup, skip patterns, blocklist checked before version probing
+- **Two-tier cache** (planned): provider data 24h TTL, PATH scan 1h TTL
 
 ## Key Design Decisions
 - Zero CLI options — no flags, no config, just run it

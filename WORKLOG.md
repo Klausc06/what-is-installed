@@ -107,7 +107,13 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 - Backup retains `.git`, `.review-reports/`, and `tests/run-extended.sh` for auditability.
 - Local entrypoints should point to the canonical project, not the archived clone.
 
+### Performance Optimization (Phase 1+2+5)
+
+- **Phase 1**: Reordered filter before probe — SEEN_NAMES, FAMILY_SKIP, *-config/*.py checks now run before get_command_version(), eliminating wasted version probing for commands that would be skipped.
+- **Phase 2**: Added `lib/providers.sh` — brew_provider (`brew list --versions`, 0.68s for 48 packages) and cargo_provider bulk version queries. Providers populate cache arrays before PATH scan; get_command_version() returns cached hits without process execution.
+- **Phase 5**: Per-command progress dots every 20 probes (was per-directory).
+
 ## Current State
 
-80 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+82 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

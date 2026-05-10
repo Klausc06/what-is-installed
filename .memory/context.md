@@ -4,11 +4,13 @@
 - `main` — primary development branch
 
 ## Current State
-- 75 commits (2026-05-10)
+- 80 commits (2026-05-10)
 - Working tree clean
 - 0 shellcheck bugs, all tests pass
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests)
 - CRLF safety: git config core.autocrlf=false, sed strip before shellcheck
+- Canonical repo path: `/Users/klaus/Documents/Projects/what-is-installed`
+- Old loose clone archived at `/Users/klaus/Documents/Projects/repo-backups/what-is-installed/20260510-124118`
 
 ## Platform Support
 - macOS: .command launcher, Homebrew detection, Apple Silicon + Intel
@@ -31,3 +33,7 @@
 ## Install Methods
 - `bash install.sh` (all platforms, one command)
 - `powershell -ExecutionPolicy Bypass -File install.ps1` (Windows)
+
+## Local Backup Policy
+- Keep timestamped old repo snapshots under `/Users/klaus/Documents/Projects/repo-backups/<project>/<YYYYMMDD-HHMMSS>`.
+- Do not leave loose project clones such as `/Users/klaus/what-is-installed` around after they are archived.

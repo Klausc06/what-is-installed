@@ -1,5 +1,10 @@
 # what-is-installed — Decisions Log
 
+## 2026-05-10: Local backup layout
+- Canonical repo is `/Users/klaus/Documents/Projects/what-is-installed`.
+- Old repo snapshots go under `/Users/klaus/Documents/Projects/repo-backups/what-is-installed/<timestamp>` as full local Git repositories.
+- Loose old clones should be removed after backup, while executable entrypoints (`~/.local/bin`, Desktop launcher) must be repointed to the canonical repo first.
+
 ## 2026-05-07/08: Cross-platform refactor
 - Added caching, timeout, multi-format output
 - Bash 3.2 compatibility fixes (set -e, local outside functions)

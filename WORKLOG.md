@@ -100,7 +100,14 @@ CRLF emerged as the main friction:
 
 Other findings (JSON/CSV dead code, shellcheck unused vars) already known / intentional.
 
+### Local Repository Consolidation
+
+- Canonical project path confirmed: `/Users/klaus/Documents/Projects/what-is-installed`.
+- Old loose clone `/Users/klaus/what-is-installed` archived as a timestamped local Git repository under `/Users/klaus/Documents/Projects/repo-backups/what-is-installed/20260510-124118`.
+- Backup retains `.git`, `.review-reports/`, and `tests/run-extended.sh` for auditability.
+- Local entrypoints should point to the canonical project, not the archived clone.
+
 ## Current State
 
-79 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+80 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

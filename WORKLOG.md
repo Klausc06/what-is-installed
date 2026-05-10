@@ -114,6 +114,12 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 - Provider-driven model is simpler: `brew list --versions` + `cargo install --list` populate memory arrays at every run.
 - Result is always current; speed comes from bulk queries instead of cached snapshots.
 
+### OS Code Split
+
+- Split `lib/platform.sh` and `lib/providers.sh` into per-OS files
+- New structure: `lib/detect.sh` (OS detection), `lib/shared.sh` (cross-platform utils), `lib/platform/{macos,linux,windows,bsd}.sh`, `lib/providers/{cargo,resolve}.sh`
+- Each platform file exports the same function contract; main script sources only the active OS
+
 ### Performance Optimization (Phase 1+2+5)
 
 - **Phase 1**: Reordered filter before probe — SEEN_NAMES, FAMILY_SKIP, *-config/*.py checks now run before get_command_version(), eliminating wasted version probing for commands that would be skipped.
@@ -122,5 +128,5 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 
 ## Current State
 
-83 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+86 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

@@ -4,7 +4,7 @@
 - `main` — primary development branch
 
 ## Current State
-- 83 commits (2026-05-10) — disk cache removed, provider-only model — Phase 1+2+5 perf optimizations landed
+- 86 commits — code split by OS — disk cache removed, provider-only model — Phase 1+2+5 perf optimizations landed
 - Working tree clean
 - 0 shellcheck bugs, 2 tests pass (cache test removed with disk cache)
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests)
@@ -24,8 +24,10 @@
 - install.sh on Windows: copies script + creates .bat wrapper (no symlinks)
 - PowerShell: needs .bat wrapper, PATH via registry (SetEnvironmentVariable)
 
-## Performance Architecture
-- **Provider layer** (`lib/providers.sh`): brew + cargo bulk version queries pre-populate cache
+## Architecture
+- **Per-OS platform files**: `lib/platform/{macos,linux,windows,bsd}.sh` — each exports same contract
+- **Provider layer**: `lib/providers/` — cargo (cross-platform), resolve (OS dispatcher)
+- **Shared core**: `lib/detect.sh` (OS detection), `lib/shared.sh` (utils, version probing), `lib/render.sh` (output)
 - **Filter-before-probe**: dedup, skip patterns, blocklist checked before version probing
 - **No disk cache**: every run is a fresh snapshot; speed comes from `brew list --versions` bulk queries
 

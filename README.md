@@ -8,20 +8,19 @@
 
 Scan your `$PATH` and see every CLI tool you have — with versions, grouped by source, in a beautiful table.
 
-No dependencies. Works on macOS, Linux, BSD, and Windows (MinGW/Cygwin). Zero-config.
+No dependencies. Works on macOS, Linux, BSD, and Windows (MinGW/Cygwin). Zero-config. Every run is a live snapshot.
 
 ## Features
 
 - **Dynamic PATH scanning** — no hardcoded lists, reads `$PATH` directly
+- **Fast provider layer** — queries `brew list --versions`, `cargo install --list` in bulk instead of probing each command individually
+- **Filter-before-probe** — dedup, skip patterns, and blocklist checked before version probing
 - **Version detection** — probes `--version` then `-V`, extracts semver, handles encoding fallback
 - **Smart deduplication** — same command shown once; family variants (python3.12 / python3) deduplicated
 - **Beautiful output** — box-drawing tables with ANSI colors, grouped by source category
-- **Multiple formats** — table (default), JSON, CSV, and plain text
-- **File cache** — TSV-based cache (1h TTL) speeds up repeat runs; safe parser, no `source` exec
-- **Filtering & sorting** — fuzzy filter by name, sort by name/version/path
 - **Cross-platform** — macOS, Linux, BSD, MinGW, Cygwin. Bash 3.2+ compatible.
 - **System directory filtering** — skips `/bin`, `/sbin`, `/usr/*`, `/System/` by default
-- **Timeout protection** — per-command 1s timeout with job-control killer
+- **Timeout protection** — per-command 1s timeout with polling fallback for Windows
 - **Zero dependencies** — pure Bash, not even `jq`
 
 ## Quick Install
@@ -82,15 +81,13 @@ what-is-installed
 
 If you see a colored table of your CLI tools, it's working. If you get "command not found", make sure `~/.local/bin` is in your PATH (the installer warns you if it isn't).
 
-> **First run?** It'll take a few seconds — the tool probes every command for its version. After that, results are cached and it's instant.
-
 ## Usage
 
 ```bash
 what-is-installed
 ```
 
-That's it. No flags, no options, no config. Run it and get a beautiful table of every CLI tool on your system.
+That's it. No flags, no options, no config. Run it and get a live snapshot of every CLI tool on your system.
 
 ### Sample Output
 
@@ -125,21 +122,34 @@ Source categories are auto-detected per platform (Homebrew, Snap, npm Global, Py
 
 ## How It Works
 
-1. Reads `$PATH`, deduplicates directories while preserving order
-2. For each non-system directory, finds executable files
-3. Probes `--version` on each command (falls back to `-V`, handles latin1→UTF-8)
-4. Extracts semver via regex; marks `-` if undetectable
-5. Deduplicates by name + family (e.g. `python3.12` and `python3.11` with same version)
-6. Groups results by source category with colored box-drawing tables
-7. Caches results to `~/.cache/what-is-installed/versions.cache` (1-hour TTL)
+1. Detects your OS and loads the matching platform support
+2. Queries available package managers (`brew list --versions`, `cargo install --list`) for bulk version data
+3. Reads `$PATH`, deduplicates directories while preserving order
+4. For each non-system directory, filters executables (dedup, skip patterns, blocklist) **before** probing
+5. Probes `--version` on remaining commands (falls back to `-V`, handles latin1→UTF-8); cache-hit from provider data skips the probe
+6. Extracts semver via regex; marks `-` if undetectable
+7. Deduplicates by name + family (e.g. `python3.12` and `python3.11` with same version)
+8. Groups results by source category with colored box-drawing tables
 
 ## Architecture
 
 ```
-bin/what-is-installed     # Main script (353 lines)
-lib/platform.sh           # OS detection, system dirs, category labels (79 lines)
-lib/render.sh             # Table/JSON/CSV/plain rendering, colors, cache escaping (247 lines)
+bin/what-is-installed       # Main entry point (~160 lines)
+lib/
+  detect.sh                 # OS detection
+  shared.sh                 # Cross-platform utils + version probing
+  render.sh                 # Table rendering + ANSI colors
+  platform/
+    macos.sh                # macOS: system dirs, section labels, brew provider
+    linux.sh                # Linux: system dirs, apt/snap/flatpak providers
+    windows.sh              # Windows (MinGW/Cygwin) support
+    bsd.sh                  # BSD support
+  providers/
+    cargo.sh                # Cargo provider (cross-platform)
+    resolve.sh              # OS-dispatched provider resolver
 ```
+
+Each `platform/*.sh` exports the same function contract (`get_system_dirs`, `section_label`, `section_color`, `get_accel_env`). The main script sources only the active OS file. Adding a new platform or package manager means changing one file.
 
 ## Built With
 
@@ -163,20 +173,19 @@ MIT
 
 扫描你的 `$PATH`，查看所有已安装的 CLI 工具——带版本号、按来源分组、精美表格展示。
 
-零依赖。支持 macOS、Linux、BSD 和 Windows（MinGW/Cygwin）。开箱即用。
+零依赖。支持 macOS、Linux、BSD 和 Windows（MinGW/Cygwin）。开箱即用。每次运行都是实时快照。
 
 ## 功能特性
 
 - **动态 PATH 扫描** — 无硬编码列表，直接读取 `$PATH`
+- **快速 Provider 层** — 用 `brew list --versions`、`cargo install --list` 批量拿版本，不逐条执行
+- **先过滤后探测** — 去重、跳过规则、屏蔽列表在版本探测前执行，减少无效进程调用
 - **版本检测** — 先探测 `--version`，再降级到 `-V`，提取 semver，处理编码回退
 - **智能去重** — 同名命令只显示一次；家族变体（python3.12 / python3）自动去重
 - **精美输出** — ANSI 色彩 + 制表符边框，按来源分组
-- **多格式支持** — 表格（默认）、JSON、CSV、纯文本
-- **文件缓存** — TSV 格式缓存（1 小时有效期），安全解析器，不用 `source` 执行
-- **过滤与排序** — 按名称模糊过滤，按名称/版本/路径排序
 - **跨平台** — macOS、Linux、BSD、MinGW、Cygwin，兼容 Bash 3.2+
 - **系统目录过滤** — 默认跳过 `/bin`、`/sbin`、`/usr/*`、`/System/`
-- **超时保护** — 每个命令 1 秒超时，job-control 杀手模式
+- **超时保护** — 每个命令 1 秒超时，Windows 用前台轮询
 - **零依赖** — 纯 Bash，连 `jq` 都不需要
 
 ## 快速安装
@@ -237,15 +246,13 @@ what-is-installed
 
 如果看到一张彩色表格列出你的 CLI 工具，就成功了。如果提示 "command not found"，检查 `~/.local/bin` 是否在 PATH 中（安装脚本会提示你）。
 
-> **第一次运行？** 会慢几秒——需要逐一探测每个命令的版本号。之后有缓存，秒出。
-
 ## 用法
 
 ```bash
 what-is-installed
 ```
 
-就这一条命令。没有参数，没有选项，没有配置。直接运行，得到一张漂亮的系统工具清单表格。
+就这一条命令。没有参数，没有选项，没有配置。直接运行，得到一张实时的系统工具清单。
 
 ### 输出样例
 
@@ -280,21 +287,34 @@ what-is-installed
 
 ## 工作原理
 
-1. 读取 `$PATH`，去重同时保留原始顺序
-2. 遍历每个非系统目录，找出可执行文件
-3. 对每个命令探测 `--version`（降级到 `-V`，处理 latin1→UTF-8 编码）
-4. 用正则提取 semver；无法检测则显示 `-`
-5. 按名称 + 家族去重（如同一版本的 `python3.12` 和 `python3.11`）
-6. 按来源分类，用彩色制表符表格展示
-7. 结果缓存到 `~/.cache/what-is-installed/versions.cache`（1 小时有效）
+1. 检测操作系统，加载对应的平台支持
+2. 查询可用的包管理器（`brew list --versions`、`cargo install --list`）批量拿版本
+3. 读取 `$PATH`，去重同时保留原始顺序
+4. 遍历每个非系统目录，**在版本探测前**先过滤（去重、跳过规则、屏蔽列表）
+5. 对剩余命令探测 `--version`（降级到 `-V`，处理编码）；provider 缓存的命令直接跳过
+6. 用正则提取 semver；无法检测则显示 `-`
+7. 按名称 + 家族去重（如同一版本的 `python3.12` 和 `python3.11`）
+8. 按来源分类，用彩色制表符表格展示
 
 ## 架构
 
 ```
-bin/what-is-installed     # 主脚本（353 行）
-lib/platform.sh           # 系统检测、系统目录、分类标签（79 行）
-lib/render.sh             # 表格/JSON/CSV/纯文本渲染、颜色、缓存转义（247 行）
+bin/what-is-installed       # 主入口（~160 行）
+lib/
+  detect.sh                 # 系统检测
+  shared.sh                 # 跨平台工具函数 + 版本探测
+  render.sh                 # 表格渲染 + ANSI 色彩
+  platform/
+    macos.sh                # macOS：系统目录、段标签、brew provider
+    linux.sh                # Linux：系统目录、apt/snap/flatpak provider
+    windows.sh              # Windows（MinGW/Cygwin）支持
+    bsd.sh                  # BSD 支持
+  providers/
+    cargo.sh                # Cargo provider（跨平台）
+    resolve.sh              # OS 调度器
 ```
+
+每个 `platform/*.sh` 导出相同的函数签名（`get_system_dirs`、`section_label`、`section_color`、`get_accel_env`）。主脚本只加载当前 OS 对应的文件。新增平台或包管理器只需改动一个文件。
 
 ## 致谢
 

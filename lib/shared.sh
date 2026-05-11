@@ -41,9 +41,10 @@ run_with_timeout() {
     # (background { sleep; kill; } & fails on Windows Git Bash)
     "$@" >"$tmpfile" 2>&1 &
     pid=$!
+    local max_ticks=$((timeout * 5))
     waited=0
-    while kill -0 "$pid" 2>/dev/null && [[ $waited -lt $timeout ]]; do
-      sleep 1
+    while kill -0 "$pid" 2>/dev/null && [[ $waited -lt $max_ticks ]]; do
+      sleep 0.2
       ((waited++))
     done
     if kill -0 "$pid" 2>/dev/null; then

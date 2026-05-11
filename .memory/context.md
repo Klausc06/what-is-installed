@@ -4,9 +4,9 @@
 - `main` — primary development branch
 
 ## Current State
-- 86 commits — code split by OS — disk cache removed, provider-only model — Phase 1+2+5 perf optimizations landed
+- 92 commits — gtimeout detection, skip-V optimization, benchmark script — disk cache removed, provider-only model — Phase 1+2+5 perf optimizations landed
 - Working tree clean
-- 0 shellcheck bugs, 2 tests pass (cache test removed with disk cache)
+- 0 shellcheck bugs, 2 tests pass, benchmark: 14s (curated PATH) (cache test removed with disk cache)
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests)
 - CRLF safety: git config core.autocrlf=false, sed strip before shellcheck
 - Canonical repo path: `/Users/klaus/Documents/Projects/what-is-installed`
@@ -29,11 +29,10 @@
 - **Provider layer**: `lib/providers/` — cargo (cross-platform), resolve (OS dispatcher)
 - **Shared core**: `lib/detect.sh` (OS detection), `lib/shared.sh` (utils, version probing), `lib/render.sh` (output)
 - **Filter-before-probe**: dedup, skip patterns, blocklist checked before version probing
-- **No disk cache**: every run is a fresh snapshot; speed comes from `brew list --versions` bulk queries
+- **No disk cache**: every run is a fresh snapshot; speed comes from `brew list --versions` bulk queries + GNU timeout
 
 ## Key Design Decisions
 - Zero CLI options — no flags, no config, just run it
-- TSV cache (safe parser, not `source`-based), 1-hour TTL
 - ANSI box-drawing table with color, dot-drawing fallback for ASCII mode
 - Bilingual README with language switcher
 

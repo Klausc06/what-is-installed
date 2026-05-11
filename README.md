@@ -31,7 +31,7 @@ The only thing you need is **Bash** — it's built into macOS and Linux. Windows
 
 | Platform | What you need | How to get it |
 |----------|--------------|---------------|
-| macOS | Nothing — Terminal is built-in | — |
+| macOS | Nothing — Terminal is built-in. `brew install coreutils` (optional, ~15x faster) | `brew install coreutils` |
 | Linux | Nothing — any terminal works | — |
 | Windows | **Git for Windows** (includes Git Bash) | [git-scm.com](https://git-scm.com) — install, then open "Git Bash" from Start Menu |
 
@@ -196,7 +196,7 @@ MIT
 
 | 平台 | 需要的工具 | 怎么获取 |
 |------|-----------|---------|
-| macOS | 不需要 — 终端自带 | — |
+| macOS | 不需要 — 终端自带。`brew install coreutils`（可选，快 ~15 倍） | `brew install coreutils` |
 | Linux | 不需要 — 任何终端都行 | — |
 | Windows | **Git for Windows**（自带 Git Bash） | [git-scm.com](https://git-scm.com) — 安装后从开始菜单打开 "Git Bash" |
 

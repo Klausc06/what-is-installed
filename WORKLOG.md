@@ -120,6 +120,13 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 - New structure: `lib/detect.sh` (OS detection), `lib/shared.sh` (cross-platform utils), `lib/platform/{macos,linux,windows,bsd}.sh`, `lib/providers/{cargo,resolve}.sh`
 - Each platform file exports the same function contract; main script sources only the active OS
 
+### Performance Optimizations Round 2
+
+- **Skip -V on timeout**: commands that timeout on `--version` no longer retry with `-V`, saving 1s per unsupported command.
+- **gtimeout detection**: macOS Homebrew installs GNU timeout as `gtimeout` (coreutils). `run_with_timeout` now checks both `timeout` and `gtimeout`. Using GNU timeout avoids the polling fallback which had a 1s floor per command due to zombie process behavior.
+- **Benchmark script**: `bench/run.sh` with curated PATH for reproducible performance tracking.
+- Results: 219s (baseline) → 212s (skip -V) → 14s (gtimeout). **15x speedup.**
+
 ### Performance Optimization (Phase 1+2+5)
 
 - **Phase 1**: Reordered filter before probe — SEEN_NAMES, FAMILY_SKIP, *-config/*.py checks now run before get_command_version(), eliminating wasted version probing for commands that would be skipped.
@@ -128,5 +135,5 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 
 ## Current State
 
-86 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
+92 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
 Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).

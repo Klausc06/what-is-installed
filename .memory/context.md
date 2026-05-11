@@ -4,7 +4,7 @@
 - `main` — primary development branch
 
 ## Current State
-- 100 commits — Windows optimization: 0.2s polling, path labels, winget/scoop/choco providers, CI PowerShell test
+- 103 commits — Windows + Linux optimization: 0.2s polling, path labels, winget/scoop/choco/rpm/pacman providers, PowerShell CI, Linux arch skip
 - Working tree clean
 - 0 shellcheck errors, 2 tests pass
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests + new powershell-install job)
@@ -28,7 +28,7 @@
 
 ## Architecture
 - **Per-OS platform files**: `lib/platform/{macos,linux,windows,bsd}.sh` — each exports same contract
-- **Provider layer**: `lib/providers/` — cargo, winget, scoop, choco (cross-platform), resolve (OS dispatcher)
+- **Provider layer**: `lib/providers/` — cargo, winget, scoop, choco, rpm, pacman (cross-platform), resolve (OS dispatcher)
 - **Shared core**: `lib/detect.sh` (OS detection), `lib/shared.sh` (utils, version probing), `lib/render.sh` (output)
 - **Filter-before-probe**: dedup, skip patterns, blocklist checked before version probing
 - **No disk cache**: every run is a fresh snapshot; speed comes from bulk queries + GNU timeout

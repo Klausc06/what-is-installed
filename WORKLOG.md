@@ -171,3 +171,36 @@ Windows CI: ✅ all-green (shellcheck + tests on windows-latest). PowerShell ins
 - 0 shellcheck errors, all tests pass
 - 5 commits, 3 subagent implementers, 5 review stages
 - Commit count: 92 → 100
+
+## 2026-05-11 — Linux Optimization (Hermes, subagent-driven)
+
+### Subagent Execution
+- Plan written to `.hermes/plans/2026-05-11_linux-optimization.md`
+- 3 tasks dispatched in parallel; each with verification (shellcheck + tests)
+
+### Path Labels (`7be1d1f`)
+- Added 6 Linux dev tool labels: Cargo, Go, nvm, pyenv, Deno, Nix
+- Color-coded: Cargo (Yellow), Go (Cyan), nvm (Green), pyenv (Blue), Deno (Green), Nix (Blue)
+- Total Linux labels: 5 → 11
+
+### Architecture Skip Patterns (`7be1d1f`)
+- `get_family_skip_patterns`: added `.*-(x86_64|aarch64|i686|armv7l|armhf)$`
+- Mirrors macOS `.*-(intel64|arm64)$` — skips arch-variant siblings on multi-arch systems
+
+### rpm and pacman Providers (`068616c`)
+- 2 new files: `lib/providers/{rpm,pacman}.sh`
+- rpm: `rpm -qa --queryformat '%{NAME} %{VERSION}\n'` with 5s timeout, skips gpg-pubkey
+- pacman: `pacman -Q` with 3s timeout
+- Modified `resolve.sh` + `bin/what-is-installed` (source new files)
+- Linux providers: 3 → 5 (apt, snap, flatpak, rpm, pacman)
+
+### Session Stats
+- 5 files changed, 42 insertions, 1 deletion
+- 0 shellcheck errors, all tests pass
+- 3 commits (2 subagent, 1 docs)
+- Commit count: 100 → 103
+
+## Current State
+
+103 commits on main. Clean tree. 0 shellcheck errors. All tests pass.
+Windows CI: ✅ all-green (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.

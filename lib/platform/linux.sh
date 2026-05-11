@@ -6,7 +6,7 @@ get_system_dirs() {
 }
 
 get_family_skip_patterns() {
-  printf '%s' ''
+  printf '%s' '.*-(x86_64|aarch64|i686|armv7l|armhf)$'
 }
 
 get_accel_env() {
@@ -23,6 +23,12 @@ section_label() {
     */usr/local/bin|*/usr/local/sbin) printf '%s' 'System Local' ;;
     */snap/bin)         printf '%s' 'Snap' ;;
     */linuxbrew/*/bin)  printf '%s' 'Homebrew' ;;
+    */.cargo/bin)      printf '%s' 'Cargo' ;;
+    */go/bin)          printf '%s' 'Go' ;;
+    */.nvm/versions/*/bin) printf '%s' 'nvm' ;;
+    */.pyenv/versions/*/bin|*/.pyenv/shims) printf '%s' 'pyenv' ;;
+    */.deno/bin)       printf '%s' 'Deno' ;;
+    */.nix-profile/bin|/nix/var/nix/profiles/*/bin) printf '%s' 'Nix' ;;
     *)                 printf '%s' 'Other' ;;
   esac
 }
@@ -34,6 +40,12 @@ section_color() {
     'Homebrew')          printf '%s%s' "$C_CYAN" "$C_BOLD" ;;
     'Snap')              printf '%s%s' "$C_MAGENTA" "$C_BOLD" ;;
     'System Local')      printf '%s%s' "$C_DIM" "$C_BOLD" ;;
+    'Cargo')             printf '%s%s' "$C_YELLOW" "$C_BOLD" ;;
+    'Go')                printf '%s%s' "$C_CYAN" "$C_BOLD" ;;
+    'nvm')               printf '%s%s' "$C_GREEN" "$C_BOLD" ;;
+    'pyenv')             printf '%s%s' "$C_BLUE" "$C_BOLD" ;;
+    'Deno')              printf '%s%s' "$C_GREEN" "$C_BOLD" ;;
+    'Nix')               printf '%s%s' "$C_BLUE" "$C_BOLD" ;;
     *)                   printf '%s%s' "$C_RESET" "$C_BOLD" ;;
   esac
 }

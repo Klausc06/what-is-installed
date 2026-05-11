@@ -203,4 +203,29 @@ Windows CI: ✅ all-green (shellcheck + tests on windows-latest). PowerShell ins
 ## Current State
 
 103 commits on main. Clean tree. 0 shellcheck errors. All tests pass.
-Windows CI: ✅ all-green (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.
+Windows CI: ✅ all-green
+
+## 2026-05-11 — Code Review Fixes (Hermes)
+
+### Review Findings
+- Code review against v0.4.0 changes found 3 non-blocking suggestions
+
+### Fix: Remove unnecessary `|| true` (`c793539`)
+- winget.sh, scoop.sh, choco.sh had `|| true` on process substitution — bash `set -e` doesn't propagate subshell exit codes from process substitutions, making it redundant. Aligned with the other 5 providers.
+
+### Fix: Winget multi-word package names (`a28790c`)
+- Old regex `^([^[:space:]]+)` only captured single-token names. New regex `^(.+)[[:space:]]{2,}` uses column-boundary matching, then trims trailing spaces with `%%+([[:space:]])`. Now captures all 14/14 test cases including 5-word names.
+- Two independent subagent regex audits confirmed the fix (first audit caught `\s`/`.+?` incompatibility with bash POSIX ERE)
+
+### Refactor: Extract shared provider regex parser (`5074bae`)
+- New `lib/providers/_common.sh` with `_wi_provider_parse_regex(timeout, cmd, regex, need_trim)`
+- winget.sh: 17→5 lines, scoop.sh: 17→5 lines
+- `bin/what-is-installed`: source `_common.sh` before winget/scoop
+
+### Session Stats
+- 4 commits, 4 files changed (+ new _common.sh)
+- Commit count: 103 → 108
+
+## Current State
+
+108 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.

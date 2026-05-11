@@ -1,5 +1,19 @@
 # 更新日志
 
+## v0.4.0（2026-05-11）
+
+### Windows
+- **5 倍提速**：Windows Git Bash 上轮询粒度从 1s 降至 0.2s。
+- **路径标签**：Scoop、Chocolatey、AppData、npm Global 目录不再显示为 "Other"。
+- **包管理器 provider**：新增 `winget`、`scoop`、`choco` 批量查询，仅 `mingw|cygwin` 平台激活。
+- **PowerShell CI**：新增 `powershell-install` job，端到端测试 `install.ps1`。
+- **MinGW 过滤修复**：`/mingw` → `/mingw/`，使 MSYS2 环境（`/mingw64/bin`、`/clang64/bin`）显示 "MinGW" 标签。
+
+### Linux
+- **路径标签**：Cargo（~/.cargo/bin）、Go（~/go/bin）、nvm、pyenv、Deno、Nix 现可识别。
+- **包管理器 provider**：新增 `rpm`（RHEL/Fedora）和 `pacman`（Arch）。
+- **架构跳过规则**：`.*-(x86_64|aarch64|i686|armv7l|armhf)$`，跳过多架构系统的变体。（对应 macOS 的 `.*-(intel64|arm64)$`）
+
 ## v0.3.0（2026-05-11）
 
 ### 性能（macOS 15 倍加速）

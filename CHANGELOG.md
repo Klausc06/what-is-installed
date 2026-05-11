@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.0 (2026-05-11)
+
+### Windows
+- **5x faster probing** on Windows Git Bash — polling granularity reduced from 1s to 0.2s in `run_with_timeout` fallback.
+- **Path labels**: Scoop, Chocolatey, AppData, and npm Global directories are now labeled (no more "Other").
+- **Package manager providers**: `winget`, `scoop`, and `choco` bulk-query versions before PATH scan. Gated on `mingw|cygwin`.
+- **PowerShell CI**: new `powershell-install` job tests `install.ps1` end-to-end.
+- **MinGW filter fix**: `/mingw` → `/mingw/` so MSYS2 environments (`/mingw64/bin`, `/clang64/bin`) are labeled "MinGW" instead of being filtered as system dirs.
+
+### Linux
+- **Path labels**: Cargo (~/.cargo/bin), Go (~/go/bin), nvm, pyenv, Deno, and Nix are now recognized.
+- **Package manager providers**: `rpm` (RHEL/Fedora) and `pacman` (Arch) bulk-query versions.
+- **Architecture skip patterns**: `.*-(x86_64|aarch64|i686|armv7l|armhf)$` — skips arch-variant siblings on multi-arch systems (mirrors macOS `.*-(intel64|arm64)$`).
+
 ## v0.3.0 (2026-05-11)
 
 ### Speed (15x on macOS)

@@ -135,5 +135,39 @@ Other findings (JSON/CSV dead code, shellcheck unused vars) already known / inte
 
 ## Current State
 
-92 commits on main. Clean tree. 0 shellcheck bugs. All tests pass.
-Windows CI: ✅ all-green (shellcheck + tests on windows-latest, ~5min).
+100 commits on main. Clean tree. 0 shellcheck errors. All tests pass.
+Windows CI: ✅ all-green (shellcheck + tests on windows-latest). PowerShell install test added.
+
+## 2026-05-11 — Windows Optimization (Hermes, subagent-driven)
+
+### Plan → Subagent Execution
+- Plan written to `.hermes/plans/2026-05-11_windows-optimization.md`
+- 5 tasks dispatched: 3 parallel implementers + 2 serial; each with 2-stage review (spec compliance → code quality)
+
+### Performance: Polling Granularity (`c4086e4`)
+- `run_with_timeout` fallback loop: `sleep 1` → `sleep 0.2` with `max_ticks = timeout * 5`
+- ~5x faster probing on Windows Git Bash (no GNU timeout)
+- macOS/Linux unaffected (use GNU timeout path)
+
+### Windows Path Labels (`0ff6c65`, `d9d80d8`)
+- Added labels: Scoop, Chocolatey, AppData, npm Global — no more "Other"
+- Color-coded: Cyan (Scoop), Yellow (Choco), Blue (AppData)
+- **Review catching** (`d9d80d8`): Quality review found MinGW labels were dead code — `/mingw` in get_system_dirs matched `/mingw64/bin` too, filtering before section_label ran. Fixed: `/mingw` → `/mingw/` (trailing slash). Also added npm Global with correct case ordering (before broader AppData pattern)
+- shellcheck SC2221/SC2222 caught the ordering bug — npm before AppData
+
+### Windows Package Manager Providers (`b5d03ff`)
+- 3 new files: `lib/providers/{winget,scoop,choco}.sh`
+- Pattern: bulk-query versions before PATH scan (like brew/cargo providers)
+- Gated on `mingw|cygwin` platform + `command -v` availability
+- Modified `resolve.sh` (new case block) + `bin/what-is-installed` (source 3 files)
+- **Review finding**: winget regex misses multi-word names (Microsoft Edge, VS Code) — fallback probing still works, non-blocking
+
+### CI: PowerShell Install Test (`3c04112`)
+- New `powershell-install` job in `.github/workflows/ci.yml`
+- Runs `install.ps1`, verifies PATH, runs tool via bash, runs tests
+
+### Session Stats
+- 8 files changed, 88 insertions, 3 deletions
+- 0 shellcheck errors, all tests pass
+- 5 commits, 3 subagent implementers, 5 review stages
+- Commit count: 92 → 100

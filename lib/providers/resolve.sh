@@ -19,6 +19,14 @@ resolve_providers() {
   esac
 
   case "$_PLATFORM_OS" in
+    mingw|cygwin)
+      command -v winget >/dev/null 2>&1 && winget_provider
+      command -v scoop >/dev/null 2>&1 && scoop_provider
+      command -v choco >/dev/null 2>&1 && choco_provider
+      ;;
+  esac
+
+  case "$_PLATFORM_OS" in
     linux|bsd)
       command -v dpkg-query >/dev/null 2>&1 && apt_provider
       command -v snap >/dev/null 2>&1 && snap_provider

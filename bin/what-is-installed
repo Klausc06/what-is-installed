@@ -29,6 +29,9 @@ esac
 # ── providers ───────────────────────────────────────────
 source "$SCRIPT_DIR/../lib/providers/cargo.sh"
 source "$SCRIPT_DIR/../lib/providers/resolve.sh"
+source "$SCRIPT_DIR/../lib/providers/winget.sh"
+source "$SCRIPT_DIR/../lib/providers/scoop.sh"
+source "$SCRIPT_DIR/../lib/providers/choco.sh"
 
 # ── main ──────────────────────────────────────────────
 

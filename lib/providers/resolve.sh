@@ -29,6 +29,8 @@ resolve_providers() {
   case "$_PLATFORM_OS" in
     linux|bsd)
       command -v dpkg-query >/dev/null 2>&1 && apt_provider
+      command -v rpm >/dev/null 2>&1 && rpm_provider
+      command -v pacman >/dev/null 2>&1 && pacman_provider
       command -v snap >/dev/null 2>&1 && snap_provider
       command -v flatpak >/dev/null 2>&1 && flatpak_provider
       ;;

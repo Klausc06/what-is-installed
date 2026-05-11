@@ -32,6 +32,8 @@ source "$SCRIPT_DIR/../lib/providers/resolve.sh"
 source "$SCRIPT_DIR/../lib/providers/winget.sh"
 source "$SCRIPT_DIR/../lib/providers/scoop.sh"
 source "$SCRIPT_DIR/../lib/providers/choco.sh"
+source "$SCRIPT_DIR/../lib/providers/rpm.sh"
+source "$SCRIPT_DIR/../lib/providers/pacman.sh"
 
 # ── main ──────────────────────────────────────────────
 

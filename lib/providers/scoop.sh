@@ -13,5 +13,5 @@ scoop_provider() {
         CACHE_VALS+=("$ver")
       }
     fi
-  done < <(run_with_timeout 3 command scoop list 2>/dev/null || true)
+  done < <(run_with_timeout 3 command scoop list 2>/dev/null)
 }

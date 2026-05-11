@@ -9,5 +9,5 @@ choco_provider() {
       CACHE_NAMES+=("$name")
       CACHE_VALS+=("$ver")
     }
-  done < <(run_with_timeout 5 command choco list --local-only --limit-output 2>/dev/null || true)
+  done < <(run_with_timeout 5 command choco list --local-only --limit-output 2>/dev/null)
 }

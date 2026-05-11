@@ -13,5 +13,5 @@ winget_provider() {
         CACHE_VALS+=("$ver")
       }
     fi
-  done < <(run_with_timeout 5 command winget list 2>/dev/null || true)
+  done < <(run_with_timeout 5 command winget list 2>/dev/null)
 }

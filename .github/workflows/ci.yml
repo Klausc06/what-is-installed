@@ -30,3 +30,19 @@ jobs:
 
       - name: Run tests
         run: bash tests/run.sh
+
+  powershell-install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test install.ps1
+        shell: pwsh
+        run: |
+          ./install.ps1
+          $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
+          bash -c "what-is-installed" 2>&1 | head -5
+
+      - name: Run tests after PowerShell install
+        shell: bash
+        run: bash tests/run.sh

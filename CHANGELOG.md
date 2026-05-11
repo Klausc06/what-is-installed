@@ -1,73 +1,43 @@
 # Changelog
 
-## 2026-05-11
+## v0.3.0 (2026-05-11)
 
-### Performance: 15x Faster on macOS
+### Speed (15x on macOS)
+- Detect `gtimeout` (Homebrew coreutils) — avoids polling fallback that slept 1s per command. `brew install coreutils` for the boost.
+- Skip `-V` retry when `--version` times out.
+- Baseline: 219s → 14s (curated PATH, 101 tools). Added `bench/run.sh`.
 
-First run with curated PATH dropped from **219 seconds to 14 seconds** after two optimizations:
+### Architecture
+- Split `lib/platform.sh` and `lib/providers.sh` by OS: `lib/platform/{macos,linux,windows,bsd}.sh`, `lib/providers/{cargo,resolve}.sh`.
+- Extracted shared code to `lib/detect.sh` and `lib/shared.sh`.
 
-- **gtimeout detection** — macOS Homebrew installs GNU timeout as `gtimeout` (coreutils). The polling fallback had a 1-second floor per command due to zombie process behavior. GNU timeout avoids this entirely. `brew install coreutils` for the speedup.
-- **Skip -V on timeout** — commands that timeout on `--version` no longer retry with `-V`, saving a second per unsupported command.
+### Removed
+- Disk cache (1h TSV). Every run is a fresh snapshot. Speed is from provider bulk queries + GNU timeout.
 
-Added `bench/run.sh` for reproducible performance tracking.
+## v0.2.0 (2026-05-10)
 
-### Architecture: Code Split by OS
+### Performance
+- Filter-before-probe: dedup, skip patterns, blocklist checked before version probing.
+- Provider layer: `brew list --versions` + `cargo install --list` bulk version queries.
+- Per-command progress dots (every 20 probes).
 
-- `lib/platform.sh` and `lib/providers.sh` split into per-OS files
-- New structure: `lib/platform/{macos,linux,windows,bsd}.sh`, `lib/providers/{cargo,resolve}.sh`
-- Each platform file exports the same function contract; main script sources only the active OS
-- Shared utilities extracted to `lib/detect.sh` and `lib/shared.sh`
-
-### Removed: Disk Cache
-
-- Removed the 1-hour TSV disk cache (`load_cache` / `write_cache` / escape functions)
-- Every run is now a fresh, live snapshot
-- Speed comes from provider bulk queries (`brew list --versions`, `cargo install --list`) and GNU timeout
-
-## 2026-05-10
-
-### Performance: Filter-Before-Probe + Provider Architecture
-
-- **Filter reordering** — dedup, skip patterns (`*-config`, `*.py`, `-intel64`/`-arm64`), and blocklist now checked before version probing, avoiding wasted process execution
-- **Provider layer** — `brew list --versions` (0.68s for ~48 packages) and `cargo install --list` bulk version queries pre-populate cache arrays, bypassing individual `--version` probes
-- **Per-command progress dots** — every 20 probes instead of one per directory
-
-### Security & Bug Fixes
-
-- **Removed `eval "$(brew shellenv)"`** from macOS launcher — replaced with hardcoded PATH
-- **Fixed stderr discard** in version probe — `2>/dev/null` changed to `2>&1` so tools that write version to stderr (Java, Python) are no longer silently skipped
-- External 6-report audit fixes landed
+### Security
+- Removed `eval "$(brew shellenv)"` from macOS launcher — hardcoded PATH.
+- Stderr capture: `2>/dev/null` → `2>&1` so Java/Python tools aren't silently skipped.
 
 ### Repository
+- Canonical path: `~/Documents/Projects/what-is-installed`. Old clones archived to `repo-backups/`.
+- README rewritten (bilingual), stale features removed.
 
-- Canonical local path confirmed: `~/Documents/Projects/what-is-installed`
-- Old loose clones archived to `~/Documents/Projects/repo-backups/`
-- README rewritten (bilingual), stale features removed, current architecture documented
+## v0.1.0 (2026-05-07 ~ 2026-05-09)
 
-## 2026-05-09
-
-### Cross-Platform
-
-- **Windows CI** — GitHub Actions on `windows-latest` (shellcheck + tests), all green
-- **CRLF safety** — `core.autocrlf=false`, strip CR before shellcheck
-- **Windows hardening** — foreground polling timeout (no background kill), `/mingw*` filtered, `.bat` wrapper
-- `install.ps1` for PowerShell users (PATH via registry)
-
-### Fixes
-
-- 16 bugs fixed from 3-agent review (NO_COLOR guard, atomic cache, empty array init, nullglob, iconv guard, family dedup, version regex, null byte filter, table alignment, platform detection)
-- Timeout hang on Windows Git Bash (kill silently fails)
-- Symlink resolution for installed entrypoints
-
-## 2026-05-07/08
-
-### Initial Release
-
-- Dynamic PATH scanning, version detection (`--version` / `-V`, semver extraction, latin1→UTF-8 fallback)
-- Smart deduplication (name + family, architecture suffix skip)
-- Box-drawing table with ANSI colors, grouped by source category
+- Dynamic PATH scanning, `--version` / `-V` probing, semver extraction
+- Smart dedup (name + family), architecture suffix skip
+- Box-drawing table with ANSI colors, grouped by source
 - Cross-platform: macOS, Linux, BSD, Windows (MinGW/Cygwin)
-- Bash 3.2+ compatible, zero dependencies
-- `install.sh` with desktop launchers (`.command`, `.desktop`, `.bat`)
-- TSV disk cache (1h TTL, safe parser)
-- Removed all CLI options — zero-config philosophy
+- Bash 3.2+, zero dependencies
+- `install.sh` + desktop launchers (`.command`, `.desktop`, `.bat`)
+- `install.ps1` (PowerShell)
+- Windows CI (shellcheck + tests), CRLF safety
+- 16 bugs fixed from 3-agent review
+- Zero CLI options — just run `what-is-installed`

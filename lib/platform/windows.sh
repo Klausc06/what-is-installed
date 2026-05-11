@@ -2,7 +2,9 @@
 # lib/platform/windows.sh — Windows (MinGW/Cygwin) platform support
 
 get_system_dirs() {
-  printf '%s' '^(/c/Windows/|/proc/|/usr/bin|/usr/lib/git-core|/mingw)'
+  # /mingw/ (with trailing slash) filters only the /mingw root directory,
+  # NOT /mingw64/bin, /clang64/bin etc. — those get MinGW labels below.
+  printf '%s' '^(/c/Windows/|/proc/|/usr/bin|/usr/lib/git-core|/mingw/)'
 }
 
 get_family_skip_patterns() {
@@ -22,6 +24,7 @@ section_label() {
     */mingw*/bin)       printf '%s' 'MinGW' ;;
     */scoop/*)          printf '%s' 'Scoop' ;;
     */chocolatey/*|*/choco/*) printf '%s' 'Chocolatey' ;;
+    */AppData/Roaming/npm) printf '%s' 'npm Global' ;;
     */AppData/Local/Programs/*|*/AppData/Roaming/*) printf '%s' 'AppData' ;;
     *)                 printf '%s' 'Other' ;;
   esac
@@ -35,6 +38,7 @@ section_color() {
     'Scoop')            printf '%s%s' "$C_CYAN" "$C_BOLD" ;;
     'Chocolatey')       printf '%s%s' "$C_YELLOW" "$C_BOLD" ;;
     'AppData')          printf '%s%s' "$C_BLUE" "$C_BOLD" ;;
+    'npm Global')       printf '%s%s' "$C_YELLOW" "$C_BOLD" ;;
     *)                   printf '%s%s' "$C_RESET" "$C_BOLD" ;;
   esac
 }

@@ -17,7 +17,9 @@ detect_os() {
 detect_desktop_dir() {
   # XDG user dirs (Linux, works across locales)
   if command -v xdg-user-dir &>/dev/null; then
-    xdg-user-dir DESKTOP 2>/dev/null && return
+    local xdg_desktop
+    xdg_desktop="$(xdg-user-dir DESKTOP 2>/dev/null)" || true
+    [[ -n "$xdg_desktop" && -d "$xdg_desktop" ]] && { echo "$xdg_desktop"; return; }
   fi
   # Windows (MinGW/Cygwin): Desktop is consistently named
   if [[ -d "$HOME/Desktop" ]]; then

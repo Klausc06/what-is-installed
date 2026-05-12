@@ -30,7 +30,7 @@ test_path_order_keeps_first_directory() {
   printf '#!/usr/bin/env bash\necho "1.0.0"\n' > "$d1/onlyind1"
   chmod +x "$d1/sharedtool" "$d2/sharedtool" "$d1/onlyind1"
 
-  out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:$d2:/usr/bin:/bin" bash "$bin" 2>/dev/null)"
+  out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:$d2:$PATH" bash "$bin" 2>&1)"
 
   count=$(printf '%s\n' "$out" | grep -c 'sharedtool' || true)
   [[ "$count" -eq 1 ]] || fail "shared command should appear exactly once, got $count"

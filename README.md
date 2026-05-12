@@ -22,12 +22,12 @@ Pick your OS:
 
 **macOS / Linux / Windows (Git Bash)**
 ```bash
-git clone https://github.com/Klausc06/what-is-installed.git && cd what-is-installed && ./install.sh
+git clone https://github.com/what-is-installed/what-is-installed.git && cd what-is-installed && ./install.sh
 ```
 
 **Windows (PowerShell)**
 ```powershell
-git clone https://github.com/Klausc06/what-is-installed.git; cd what-is-installed; powershell -ExecutionPolicy Bypass -File install.ps1
+git clone https://github.com/what-is-installed/what-is-installed.git; cd what-is-installed; powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 Done. Run `what-is-installed` — if you see a table, it works.
@@ -116,12 +116,12 @@ what-is-installed
 
 **macOS / Linux / Windows（Git Bash）**
 ```bash
-git clone https://github.com/Klausc06/what-is-installed.git && cd what-is-installed && ./install.sh
+git clone https://github.com/what-is-installed/what-is-installed.git && cd what-is-installed && ./install.sh
 ```
 
 **Windows（PowerShell）**
 ```powershell
-git clone https://github.com/Klausc06/what-is-installed.git; cd what-is-installed; powershell -ExecutionPolicy Bypass -File install.ps1
+git clone https://github.com/what-is-installed/what-is-installed.git; cd what-is-installed; powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 搞定。运行 `what-is-installed`，看到彩色表格就说明成功了。

@@ -36,6 +36,9 @@ source "$SCRIPT_DIR/../lib/providers/scoop.sh"
 source "$SCRIPT_DIR/../lib/providers/choco.sh"
 source "$SCRIPT_DIR/../lib/providers/rpm.sh"
 source "$SCRIPT_DIR/../lib/providers/pacman.sh"
+source "$SCRIPT_DIR/../lib/providers/apt.sh"
+source "$SCRIPT_DIR/../lib/providers/snap.sh"
+source "$SCRIPT_DIR/../lib/providers/flatpak.sh"
 
 # ── main ──────────────────────────────────────────────
 
@@ -91,6 +94,9 @@ for dir in "${PATH_DIRS[@]}"; do
     case "$name" in
       *-config|*.py) continue ;;
     esac
+
+    # Skip the tool itself (prevents recursive probing)
+    [[ "$name" == "what-is-installed" ]] && continue
 
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"

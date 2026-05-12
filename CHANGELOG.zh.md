@@ -15,6 +15,7 @@
 
 ### Bug 修复
 - **install.sh 在无桌面 Linux 上崩溃**：`detect_desktop_dir()` 未验证 `xdg-user-dir` 返回的路径是否真实存在就直接返回。在 GitHub Actions runner 及其他无桌面环境中，`cat > "$DESKTOP/..."` 因目录不存在而报错退出。现在函数在返回 xdg 路径前增加 `[[ -d ]]` 检查，失败时 fallback 到 `$HOME`。
+- **代码审查优化**：Windows Desktop 检查增加 `$OS == "windows"` 守卫，`local` 声明提到函数顶部。测试增加 `timeout` 缺失诊断和安装提示；`skip()` 支持调用方传入跳过原因。
 
 ## v0.4.0（2026-05-11）
 

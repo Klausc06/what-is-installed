@@ -7,7 +7,7 @@
 - 111 commits — v0.4.1 simplify review + README rewrite: O(1) lookups, hoist extglob, dedup brew_provider, single-pass render, updated architecture docs, removed unrelated files
 - Working tree clean
 - 0 shellcheck errors, 2 tests pass
-- Bug fix: `detect_desktop_dir()` crash on headless Linux — validates xdg-user-dir path with `[[ -d ]]` before returning
+- Bug fix: `detect_desktop_dir()` crash on headless Linux — validates xdg-user-dir path with `[[ -d ]]` before returning, Windows Desktop check gated on OS, code review polish (timeout diagnostic, `skip()` reason param, `local` hoisted)
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests + new powershell-install job)
 - CRLF safety: git config core.autocrlf=false, sed strip before shellcheck
 - Canonical repo path: `/Users/klaus/Documents/Projects/what-is-installed`

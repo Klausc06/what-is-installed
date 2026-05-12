@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 - **install.sh crash on headless Linux**: `detect_desktop_dir()` returned paths from `xdg-user-dir` without verifying the directory existed. On GitHub Actions runners (and other headless environments) this caused `cat > "$DESKTOP/..."` to fail with `No such file or directory`. The function now checks `[[ -d ]]` before returning xdg paths, falling through to `$HOME` as last resort.
+- **Code review polish**: Windows Desktop check gated on `$OS == "windows"`, `local` declaration hoisted to function top. Tests now diagnose missing `timeout` dependency with install hints; `skip()` accepts caller-provided reason.
 
 ## v0.4.0 (2026-05-11)
 

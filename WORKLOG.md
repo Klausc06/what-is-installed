@@ -5,6 +5,7 @@ A shell tool that dynamically scans `$PATH` to report every installed CLI tool w
 ## 2026-05-12 — install.sh crash fix
 
 - Fixed `detect_desktop_dir()` crash on headless Linux: xdg-user-dir paths now validated with `[[ -d ]]` before return. Falls through to `$HOME` when Desktop doesn't exist. 4 CI failures resolved.
+- Code review polish: Windows Desktop check gated on OS, `local` hoisted, test timeout diagnostic, `skip()` reason parameter.
 
 ## 2026-04-30 — Inception
 

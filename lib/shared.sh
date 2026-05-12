@@ -3,6 +3,7 @@
 
 CACHE_NAMES=()
 CACHE_VALS=()
+_CACHE_STR=$'\n'
 VERSION_RESULT=""
 
 short_path() {
@@ -67,33 +68,29 @@ run_with_timeout() {
 }
 
 get_command_version() {
-  local cmd="$1" env_prefix output first_line i
+  local cmd="$1" env_prefix output first_line
 
-  if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
-    for i in "${!CACHE_NAMES[@]}"; do
-      [[ "${CACHE_NAMES[$i]}" == "$cmd" ]] && { VERSION_RESULT="${CACHE_VALS[$i]}"; return; }
-    done
+  if [[ "$_CACHE_STR" == *$'\n'"$cmd="* ]]; then
+    local _entry="${_CACHE_STR#*$'\n'"$cmd="}"
+    VERSION_RESULT="${_entry%%$'\n'*}"
+    return
   fi
 
   env_prefix="$(get_accel_env "$cmd")"
 
-  local ec tmpout
+  local ec flag tmpout
   tmpout="$(mktemp)"
-  if [[ -n "$env_prefix" ]]; then
-    run_with_timeout 1 env $env_prefix "$cmd" --version >"$tmpout" 2>&1 && ec=0 || ec=$?
-  else
-    run_with_timeout 1 "$cmd" --version >"$tmpout" 2>&1 && ec=0 || ec=$?
-  fi
-  output="$(tr -d '\0' <"$tmpout" 2>/dev/null)"
-  # Timeout: skip -V fallback, mark unknown immediately
-  if [[ "$ec" -ne 124 && -z "$output" ]]; then
+  for flag in --version -V; do
     if [[ -n "$env_prefix" ]]; then
-      run_with_timeout 1 env $env_prefix "$cmd" -V >"$tmpout" 2>&1 && ec=0 || ec=$?
+      run_with_timeout 1 env $env_prefix "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     else
-      run_with_timeout 1 "$cmd" -V >"$tmpout" 2>&1 && ec=0 || ec=$?
+      run_with_timeout 1 "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     fi
     output="$(tr -d '\0' <"$tmpout" 2>/dev/null)"
-  fi
+    if [[ -n "$output" || "$ec" -eq 124 ]]; then
+      break
+    fi
+  done
   rm -f "$tmpout"
 
   local result
@@ -116,6 +113,7 @@ get_command_version() {
 
   CACHE_NAMES+=("$cmd")
   CACHE_VALS+=("$result")
+  _CACHE_STR+="$cmd=$result"$'\n'
   VERSION_RESULT="$result"
 
   _PROBE_COUNT=$(( ${_PROBE_COUNT:-0} + 1 ))

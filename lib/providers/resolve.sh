@@ -1,12 +1,14 @@
 # shellcheck shell=bash
 # lib/providers/resolve.sh — Provider resolver (OS dispatcher)
 
+_wi_cache_add() {
+  CACHE_NAMES+=("$1")
+  CACHE_VALS+=("$2")
+  _CACHE_STR+="$1=$2"$'\n'
+}
+
 _wi_provider_name_exists() {
-  local name="$1" i
-  for i in "${!CACHE_NAMES[@]}"; do
-    [[ "${CACHE_NAMES[$i]}" == "$name" ]] && return 0
-  done
-  return 1
+  [[ "$_CACHE_STR" == *$'\n'"$1="* ]]
 }
 
 resolve_providers() {

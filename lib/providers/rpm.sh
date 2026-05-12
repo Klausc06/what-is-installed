@@ -7,7 +7,6 @@ rpm_provider() {
     [[ -z "$name" || -z "$ver" ]] && continue
     [[ "$name" == gpg-pubkey ]] && continue
     _wi_provider_name_exists "$name" && continue
-    CACHE_NAMES+=("$name")
-    CACHE_VALS+=("$ver")
+    _wi_cache_add "$name" "$ver"
   done < <(run_with_timeout 5 command rpm -qa --queryformat '%{NAME} %{VERSION}\n' 2>/dev/null)
 }

@@ -3,5 +3,5 @@
 
 scoop_provider() {
   _wi_provider_parse_regex 3 "scoop list" \
-    '^([^[:space:]]+)[[:space:]]+([0-9][^[:space:]]*)' 0
+    '^([^[:space:]]+)[[:space:]]+([0-9][^[:space:]]*)'
 }

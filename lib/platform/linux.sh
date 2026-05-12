@@ -50,23 +50,12 @@ section_color() {
   esac
 }
 
-brew_provider() {
-  local name ver
-  while IFS=' ' read -r name ver _; do
-    [[ -z "$name" || -z "$ver" ]] && continue
-    _wi_provider_name_exists "$name" && continue
-    CACHE_NAMES+=("$name")
-    CACHE_VALS+=("$ver")
-  done < <(run_with_timeout 3 command brew list --versions 2>/dev/null)
-}
-
 apt_provider() {
   local name ver
   while IFS=$'\t' read -r name ver _; do
     [[ -z "$name" || -z "$ver" ]] && continue
     _wi_provider_name_exists "$name" && continue
-    CACHE_NAMES+=("$name")
-    CACHE_VALS+=("$ver")
+    _wi_cache_add "$name" "$ver"
   done < <(run_with_timeout 3 command dpkg-query -W -f '${Package}\t${Version}\n' 2>/dev/null)
 }
 
@@ -75,8 +64,7 @@ snap_provider() {
   while read -r name ver _; do
     [[ -z "$name" || -z "$ver" || "$name" == "Name" ]] && continue
     _wi_provider_name_exists "$name" && continue
-    CACHE_NAMES+=("$name")
-    CACHE_VALS+=("$ver")
+    _wi_cache_add "$name" "$ver"
   done < <(run_with_timeout 3 command snap list 2>/dev/null)
 }
 
@@ -85,7 +73,6 @@ flatpak_provider() {
   while read -r name _ ver _; do
     [[ -z "$name" || -z "$ver" ]] && continue
     _wi_provider_name_exists "$name" && continue
-    CACHE_NAMES+=("$name")
-    CACHE_VALS+=("$ver")
+    _wi_cache_add "$name" "$ver"
   done < <(run_with_timeout 3 command flatpak list --columns=application,version 2>/dev/null)
 }

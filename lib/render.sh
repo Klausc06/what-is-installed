@@ -73,13 +73,25 @@ csv_field() {
 
 render_table() {
   local num_sections=${#ALL_SECTION_DIRS[@]}
-  local si label start count j entry ename ever epath sp
-  local max_name max_ver max_path table_width header_text pad_left pad_right scolor
+  local i si label start count j entry ename ever epath sp
+  local max_name=4 max_ver=7 max_path=4 table_width header_text pad_left pad_right scolor
 
   if [[ $num_sections -eq 0 ]]; then
     printf '\n  %sNo tools found in non-system PATH directories.%s\n\n' "$C_DIM" "$C_RESET"
     exit 0
   fi
+
+  local -a _short_paths=()
+  for i in "${!ALL_SECTION_ITEMS[@]}"; do
+    IFS='|' read -r ename ever epath <<< "${ALL_SECTION_ITEMS[$i]}"
+    [[ ${#ename} -gt $max_name ]] && max_name=${#ename}
+    [[ ${#ever}  -gt $max_ver  ]] && max_ver=${#ever}
+    sp="$(short_path "$epath")"
+    [[ ${#sp} -gt $max_path ]] && max_path=${#sp}
+    _short_paths+=("$sp")
+  done
+
+  table_width=$(( 2 + max_name + 3 + max_ver + 3 + max_path + 2 ))
 
   printf '\n'
 
@@ -87,21 +99,6 @@ render_table() {
     label="${ALL_SECTION_DIRS[$si]}"
     start="${ALL_SECTION_START[$si]}"
     count="${ALL_SECTION_COUNTS[$si]}"
-
-    max_name=4
-    max_ver=7
-    max_path=4
-
-    for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      [[ ${#ename} -gt $max_name ]] && max_name=${#ename}
-      [[ ${#ever}  -gt $max_ver  ]] && max_ver=${#ever}
-      sp="$(short_path "$epath")"
-      [[ ${#sp} -gt $max_path ]] && max_path=${#sp}
-    done
-
-    table_width=$(( 2 + max_name + 3 + max_ver + 3 + max_path + 2 ))
 
     scolor="$(section_color "$label")"
     header_text=" $label "
@@ -136,9 +133,8 @@ render_table() {
       "$B_CR$C_RESET"
 
     for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      sp="$(short_path "$epath")"
+      IFS='|' read -r ename ever epath <<< "${ALL_SECTION_ITEMS[$j]}"
+      sp="${_short_paths[$j]}"
 
       printf '%s ' "$C_DIM$B_V$C_RESET"
       printf '%s%-*s%s' "$C_BOLD" "$max_name" "$ename" "$C_RESET"

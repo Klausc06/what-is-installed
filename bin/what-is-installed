@@ -28,6 +28,7 @@ esac
 
 # ── providers ───────────────────────────────────────────
 source "$SCRIPT_DIR/../lib/providers/cargo.sh"
+source "$SCRIPT_DIR/../lib/providers/brew.sh"
 source "$SCRIPT_DIR/../lib/providers/resolve.sh"
 source "$SCRIPT_DIR/../lib/providers/_common.sh"
 source "$SCRIPT_DIR/../lib/providers/winget.sh"
@@ -44,10 +45,8 @@ setup_glyphs
 
 resolve_providers
 
-SEEN_NAMES=()
-SEEN_FAMILIES=()
-SEEN_VERSIONS=()
-SEEN_PATH_DIRS=()
+_seen_names_str=$'\n'
+_seen_family_ver_str=$'\n'
 _PROBE_COUNT=0
 
 ALL_SECTION_DIRS=()
@@ -59,17 +58,12 @@ SYSTEM_DIRS="$(get_system_dirs)"
 FAMILY_SKIP="$(get_family_skip_patterns)"
 
 PATH_DIRS=()
+_seen_dirs=$'\n'
 OLD_IFS="$IFS"
 IFS=':'
 for dir in $PATH; do
-  duplicate_dir=false
-  if [[ ${#SEEN_PATH_DIRS[@]} -gt 0 ]]; then
-    for seen_dir in "${SEEN_PATH_DIRS[@]}"; do
-      [[ "$seen_dir" == "$dir" ]] && { duplicate_dir=true; break; }
-    done
-  fi
-  [[ "$duplicate_dir" == true ]] && continue
-  SEEN_PATH_DIRS+=("$dir")
+  [[ "$_seen_dirs" == *$'\n'"$dir"$'\n'* ]] && continue
+  _seen_dirs+="$dir"$'\n'
   PATH_DIRS+=("$dir")
 done
 IFS="$OLD_IFS"
@@ -88,46 +82,30 @@ for dir in "${PATH_DIRS[@]}"; do
 
     name="${path##*/}"
 
-    # Filter 1: Name dedup
-    found=false
-    if [[ ${#SEEN_NAMES[@]} -gt 0 ]]; then
-      for seen in "${SEEN_NAMES[@]}"; do
-        [[ "$seen" == "$name" ]] && { found=true; break; }
-      done
-    fi
-    [[ "$found" == true ]] && continue
+    [[ "$_seen_names_str" == *$'\n'"$name"$'\n'* ]] && continue
 
-    # Filter 2: Architecture suffix skip
     if [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]]; then
       continue
     fi
 
-    # Filter 3: Blocklist patterns
     case "$name" in
       *-config|*.py) continue ;;
     esac
 
-    # Filter 4: Extract family prefix
     family="${name%-*}"
     [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
     [[ "$family" == "$name" ]] && family=""
 
-    # Now probe version — only for commands that passed ALL filters
     get_command_version "$name"
     ver="$VERSION_RESULT"
     [[ "$ver" == "-" ]] && continue
 
-    # Filter 5: Family+version dedup (needs version from probe)
     if [[ -n "$family" ]]; then
-      skip=false
-      for j in "${!SEEN_FAMILIES[@]}"; do
-        [[ "${SEEN_FAMILIES[$j]}" == "$family" && "${SEEN_VERSIONS[$j]}" == "$ver" ]] && { skip=true; break; }
-      done
-      [[ "$skip" == true ]] && continue
+      [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
     fi
 
-    SEEN_NAMES+=("$name")
-    [[ -n "$family" ]] && { SEEN_FAMILIES+=("$family"); SEEN_VERSIONS+=("$ver"); }
+    _seen_names_str+="$name"$'\n'
+    [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
 
     ALL_SECTION_ITEMS+=("$name|$ver|$path")
     has_items=true

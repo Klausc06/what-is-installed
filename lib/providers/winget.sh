@@ -3,5 +3,5 @@
 
 winget_provider() {
   _wi_provider_parse_regex 5 "winget list" \
-    '^(.+)[[:space:]]{2,}[^[:space:]]+[[:space:]]+([0-9][^[:space:]]*)' 1
+    '^(.+)[[:space:]]{2,}[^[:space:]]+[[:space:]]+([0-9][^[:space:]]*)'
 }

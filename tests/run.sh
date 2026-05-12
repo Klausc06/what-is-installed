@@ -4,13 +4,19 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FAIL=0
 
+if ! command -v timeout &>/dev/null; then
+  echo "# Note: 'timeout' not found. Integration test will skip."
+  echo "# Install: brew install coreutils (macOS) or apt install coreutils (Linux)"
+fi
+
 fail() {
   echo "not ok - $*"
   FAIL=$((FAIL + 1))
 }
 
 skip() {
-  echo "ok - $* # SKIP (tool produced no output on this PATH)"
+  local reason="$1"; shift
+  echo "ok - $* # SKIP ($reason)"
 }
 
 # ── tests ─────────────────────────────────────────
@@ -32,7 +38,7 @@ test_path_order_keeps_first_directory() {
   out="$(XDG_CACHE_HOME="$cache" NO_COLOR=1 PATH="$d1:$d2:$PATH" timeout 10 bash "$bin" 2>/dev/null || true)"
 
   if [[ -z "$out" ]]; then
-    skip "what-is-installed integration test"
+    skip "tool produced no output" "what-is-installed integration test"
     return
   fi
 

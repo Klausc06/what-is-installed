@@ -15,17 +15,18 @@ detect_os() {
 }
 
 detect_desktop_dir() {
+  local xdg_desktop
+
   # XDG user dirs (Linux, works across locales)
   if command -v xdg-user-dir &>/dev/null; then
-    local xdg_desktop
     xdg_desktop="$(xdg-user-dir DESKTOP 2>/dev/null)" || true
     [[ -n "$xdg_desktop" && -d "$xdg_desktop" ]] && { echo "$xdg_desktop"; return; }
   fi
   # Windows (MinGW/Cygwin): Desktop is consistently named
-  if [[ -d "$HOME/Desktop" ]]; then
+  if [[ "$OS" == "windows" && -d "$HOME/Desktop" ]]; then
     echo "$HOME/Desktop" && return
   fi
-  # Fallback: common Linux paths
+  # Fallback: common paths
   for d in "$HOME/Desktop" "$HOME/桌面"; do
     [[ -d "$d" ]] && { echo "$d"; return; }
   done

@@ -17,7 +17,7 @@ jobs:
         run: shellcheck --severity=error bin/what-is-installed lib/*.sh lib/platform/*.sh lib/providers/*.sh install.sh
 
       - name: Run tests
-        run: bash tests/run.sh
+        run: bash -x tests/run.sh 2>&1 || { echo "TESTS FAILED (exit=$?)"; exit 1; }
 
       - name: Smoke test (install + run)
         run: |

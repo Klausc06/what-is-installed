@@ -226,6 +226,44 @@ Windows CI: ✅ all-green
 - 4 commits, 4 files changed (+ new _common.sh)
 - Commit count: 103 → 108
 
+## 2026-05-12 — Simplify: Code Review + Performance (Claude Code /simplify)
+
+### Review Process
+- Three parallel agents (Reuse, Quality, Efficiency) reviewed recent changes + full codebase
+- 8 issues identified and fixed in a single commit
+
+### Perf: O(1) lookups with string-based dedup
+- Replaced `_wi_provider_name_exists` O(n) array scan with `[[ $str == *$'\n'$name=* ]]` glob match
+- Replaced `get_command_version` cache linear scan with string-based lookup
+- Replaced `SEEN_NAMES` and `SEEN_FAMILIES`/`SEEN_VERSIONS` O(n) scans with newline-delimited strings
+- Added `_wi_cache_add()` helper in resolve.sh to keep CACHE_NAMES/VALS + `_CACHE_STR` in sync
+- All provider files updated to use `_wi_cache_add`
+
+### Perf: Hoist extglob + remove need_trim
+- `shopt -s extglob` was inside per-line while loop — moved before loop, restored after
+- Removed `need_trim` parameter — always trim trailing whitespace (idempotent operation)
+- winget.sh/scoop.sh callers simplified
+
+### Refactor: Dedup brew_provider
+- `brew_provider()` was byte-identical in macos.sh and linux.sh
+- Extracted to `lib/providers/brew.sh`, sourced before resolve.sh
+
+### Refactor: Dedup env_prefix in get_command_version
+- `--version` / `-V` blocks duplicated env_prefix conditional — replaced with flag loop
+
+### Perf: Single-pass render_table
+- Column widths now computed once globally (not per-section), `short_path` results cached
+- Fixes visual inconsistency where columns shifted between sections
+
+### Cleanup
+- Removed dead `SEEN_PATH_DIRS` array (populated but never read)
+- Deleted 6 "Filter N:" comments
+
+### Session Stats
+- 1 commit, 14 files changed (+ new brew.sh)
+- +76 -126 (net -50)
+- Commit count: 108 → 109
+
 ## Current State
 
-108 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.
+109 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.

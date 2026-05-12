@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.4.1 (2026-05-12)
+
+### Performance
+- **O(1) lookups**: Replaced O(n) linear array scans in provider dedup (`_wi_provider_name_exists`), version cache (`get_command_version`), name dedup, and family dedup with newline-delimited string glob matching — C-level, bash 3.2 compatible.
+- **Hoist extglob**: `shopt -s extglob` moved out of per-line loop in `_wi_provider_parse_regex` — eliminates hundreds of redundant shell-option mutations for large winget outputs.
+- **Single-pass render**: `render_table` column widths now computed once globally instead of per-section, with shortened paths cached — halves `short_path` calls.
+
+### Refactoring
+- **Remove `need_trim` parameter**: `_wi_provider_parse_regex` always trims trailing whitespace from captured names — callers no longer need to know regex internals.
+- **Extract `brew_provider`**: Duplicated byte-for-byte in `macos.sh` and `linux.sh` — now in `lib/providers/brew.sh`, sourced once.
+- **Deduplicate `env_prefix` logic**: `get_command_version` uses a flag loop instead of duplicating the env_prefix conditional for `--version` / `-V`.
+- **Remove dead code**: `SEEN_PATH_DIRS` array (never read after PATH dedup), 6 "Filter N" comments.
+
 ## v0.4.0 (2026-05-11)
 
 ### Windows

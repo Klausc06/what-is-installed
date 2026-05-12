@@ -1,5 +1,18 @@
 # 更新日志
 
+## v0.4.1（2026-05-12）
+
+### 性能优化
+- **O(1) 查找**：将 provider 去重、版本缓存、名称去重、家族去重中的 O(n) 线性数组扫描替换为换行分隔字符串 glob 匹配——C 级别实现，兼容 bash 3.2。
+- **extglob 外提**：`shopt -s extglob` 从逐行循环内移到循环外，并在函数结束后恢复——消除 winget 大批量输出时数百次冗余 shell 选项切换。
+- **单遍渲染**：`render_table` 列宽从逐 section 计算改为全局一次计算，short_path 结果缓存——`short_path` 调用减半。
+
+### 重构
+- **移除 `need_trim` 参数**：`_wi_provider_parse_regex` 始终去除名称尾部空格——调用方不再需要了解正则内部细节。
+- **提取 `brew_provider`**：原在 `macos.sh` 和 `linux.sh` 中逐字节重复——现在统一在 `lib/providers/brew.sh`。
+- **合并 `env_prefix` 逻辑**：`get_command_version` 改为 flag 循环，消除 `--version` / `-V` 中重复的 env_prefix 条件分支。
+- **移除死代码**：`SEEN_PATH_DIRS` 数组、6 条 "Filter N" 注释。
+
 ## v0.4.0（2026-05-11）
 
 ### Windows

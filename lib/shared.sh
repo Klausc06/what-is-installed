@@ -102,7 +102,7 @@ get_command_version() {
     fi
 
     first_line="${output%%$'\n'*}"
-    if [[ "$first_line" =~ ([0-9]+\.[0-9]+(\.[0-9]+){1,2}) ]]; then
+    if [[ "$first_line" =~ ([0-9]+\.[0-9]+(\.[0-9]+){0,2}) ]]; then
       result="${BASH_REMATCH[1]}"
     elif [[ "$first_line" =~ [Vv]ersion[[:space:]]+([0-9]+(\.[0-9]+)+) ]]; then
       result="${BASH_REMATCH[1]}"

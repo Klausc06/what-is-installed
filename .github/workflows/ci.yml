@@ -8,6 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck
+        run: shellcheck --severity=error bin/what-is-installed lib/*.sh lib/platform/*.sh lib/providers/*.sh install.sh
+
+      - name: Run tests
+        run: bash tests/run.sh
+
+      - name: Smoke test (install + run)
+        run: |
+          bash install.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          NO_COLOR=1 what-is-installed 2>&1 | head -15
+
   windows:
     runs-on: windows-latest
     defaults:

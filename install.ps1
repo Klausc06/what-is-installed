@@ -32,7 +32,7 @@ bash "%~dp0what-is-installed" %*
 echo.
 pause
 "@
-Set-Content -Path "$BinDir\what-is-installed.bat" -Value $Wrapper -Encoding ASCII -NoNewline | Out-Null
+[System.IO.File]::WriteAllText("$BinDir\what-is-installed.bat", $Wrapper)
 Write-Host "  ✓  what-is-installed       → $BinDir\what-is-installed"
 Write-Host "  ✓  what-is-installed.bat   → $BinDir\what-is-installed.bat"
 

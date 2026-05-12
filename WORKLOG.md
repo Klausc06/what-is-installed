@@ -2,6 +2,10 @@
 
 A shell tool that dynamically scans `$PATH` to report every installed CLI tool with its version. Zero dependencies, zero CLI options.
 
+## 2026-05-12 — install.sh crash fix
+
+- Fixed `detect_desktop_dir()` crash on headless Linux: xdg-user-dir paths now validated with `[[ -d ]]` before return. Falls through to `$HOME` when Desktop doesn't exist. 4 CI failures resolved.
+
 ## 2026-04-30 — Inception
 
 - Published for macOS/Linux. Core engine: scan `$PATH`, probe `--version`/`-V`.

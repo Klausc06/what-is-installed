@@ -13,6 +13,9 @@
 - **Deduplicate `env_prefix` logic**: `get_command_version` uses a flag loop instead of duplicating the env_prefix conditional for `--version` / `-V`.
 - **Remove dead code**: `SEEN_PATH_DIRS` array (never read after PATH dedup), 6 "Filter N" comments.
 
+### Bug Fixes
+- **install.sh crash on headless Linux**: `detect_desktop_dir()` returned paths from `xdg-user-dir` without verifying the directory existed. On GitHub Actions runners (and other headless environments) this caused `cat > "$DESKTOP/..."` to fail with `No such file or directory`. The function now checks `[[ -d ]]` before returning xdg paths, falling through to `$HOME` as last resort.
+
 ## v0.4.0 (2026-05-11)
 
 ### Windows

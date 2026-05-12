@@ -13,6 +13,9 @@
 - **合并 `env_prefix` 逻辑**：`get_command_version` 改为 flag 循环，消除 `--version` / `-V` 中重复的 env_prefix 条件分支。
 - **移除死代码**：`SEEN_PATH_DIRS` 数组、6 条 "Filter N" 注释。
 
+### Bug 修复
+- **install.sh 在无桌面 Linux 上崩溃**：`detect_desktop_dir()` 未验证 `xdg-user-dir` 返回的路径是否真实存在就直接返回。在 GitHub Actions runner 及其他无桌面环境中，`cat > "$DESKTOP/..."` 因目录不存在而报错退出。现在函数在返回 xdg 路径前增加 `[[ -d ]]` 检查，失败时 fallback 到 `$HOME`。
+
 ## v0.4.0（2026-05-11）
 
 ### Windows

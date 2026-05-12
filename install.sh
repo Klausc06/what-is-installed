@@ -99,6 +99,7 @@ fi
 
 # ── desktop launcher ────────────────────────────────
 DESKTOP="$(detect_desktop_dir)"
+mkdir -p "$DESKTOP"
 
 case "$OS" in
   macos)

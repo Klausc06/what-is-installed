@@ -1,5 +1,10 @@
 # what-is-installed — Decisions Log
 
+## 2026-05-12: install.sh desktop detection fix
+- `detect_desktop_dir()` must validate `xdg-user-dir` output with `[[ -d ]]` before returning — headless Linux (CI runners) may have xdg configured but no actual Desktop directory.
+- Fallback chain: xdg-user-dir (validated) → `$HOME/Desktop` (Windows only) → `$HOME/Desktop` + `$HOME/桌面` (universal) → `$HOME`.
+- Code review feedback: gate Windows Desktop check on `$OS == "windows"`, hoist `local` declarations to function top, add `timeout` diagnostic to tests, make `skip()` accept reason parameter.
+
 ## 2026-05-10: Local backup layout
 - Canonical repo is `/Users/klaus/Documents/Projects/what-is-installed`.
 - Old repo snapshots go under `/Users/klaus/Documents/Projects/repo-backups/what-is-installed/<timestamp>` as full local Git repositories.

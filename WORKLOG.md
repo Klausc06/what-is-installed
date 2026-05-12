@@ -269,8 +269,6 @@ Windows CI: ✅ all-green
 - +76 -126 (net -50)
 - Commit count: 108 → 109
 
-## Current State
-
 ## 2026-05-12 — README Rewrite + Repo Cleanup
 
 ### README Rewrite
@@ -293,4 +291,4 @@ Windows CI: ✅ all-green
 
 ## Current State
 
-111 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.
+123 commits on main. 0 shellcheck errors, 2 tests pass. Linux CI: shellcheck + tests + smoke (install + run). Windows CI: shellcheck + tests. PowerShell CI: install.ps1 e2e + tests.

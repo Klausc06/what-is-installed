@@ -7,6 +7,7 @@
 
 ## Testing
 - Manual smoke testing on macOS
+- CI: Linux (shellcheck + tests + smoke install), Windows (shellcheck + tests), PowerShell (install.ps1 e2e + tests)
 
 ## Durable State
 Source: Codex, 2026-05-09.

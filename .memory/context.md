@@ -4,7 +4,7 @@
 - `main` — primary development branch
 
 ## Current State
-- 109 commits — v0.4.1 simplify review: O(1) string lookups, hoist extglob, dedup brew_provider, single-pass render, remove dead code
+- 111 commits — v0.4.1 simplify review + README rewrite: O(1) lookups, hoist extglob, dedup brew_provider, single-pass render, updated architecture docs, removed unrelated files
 - Working tree clean
 - 0 shellcheck errors, 2 tests pass
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests + new powershell-install job)

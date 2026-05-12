@@ -1,8 +1,12 @@
 # what-is-installed 改进方案（修订版）
 
+> **状态：全部完成 ✅** — 截至 v0.4.1，本文档中提出的所有改进均已实现。
+> Phase 1（超时 + 加速 + 转码）、Phase 2（平台抽象）、Phase 3（模块化 + JSON/CSV/plain 输出）全部就绪。
+> CI（GitHub Actions macOS + Ubuntu + Windows）已配置。本文件保留作为设计记录。
+
 ## 核心原则
 
-what-is-installed 是一个 291 行的纯 Bash 工具，零外部依赖。改进必须遵循两条硬约束：
+what-is-installed 是一个纯 Bash 工具，零外部依赖。改进必须遵循两条硬约束：
 
 1. **不引入任何外部依赖** — 不依赖 jq、python、GNU coreutils
 2. **改进幅度与当前规模匹配** — 不过度工程化，不做 500 行设计来服务 300 行代码

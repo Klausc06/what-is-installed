@@ -266,4 +266,26 @@ Windows CI: ✅ all-green
 
 ## Current State
 
-109 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.
+## 2026-05-12 — README Rewrite + Repo Cleanup
+
+### README Rewrite
+- Condensed opening to one-sentence value prop
+- Single-command install per platform (clone + install in one line)
+- Platform label table (macOS/Linux/Windows)
+- Updated architecture tree with all 12 provider files
+- Removed verbose feature list and "Built With" section
+- Simplified "How It Works" to 6 steps, accurate 127-line count
+
+### Repo Cleanup
+- Removed `XIAOHONGSHU-COMMENTS.md` — unrelated social media content
+- Marked `IMPROVEMENT-PROPOSAL.md` as completed (all proposals implemented)
+- Updated `CLAUDE.md` architecture section to v0.4.1
+- Fixed stale commit counts in `.memory/context.md`
+
+### Session Stats
+- 1 commit (README) + pending cleanup commit
+- Commit count: 109 → 111
+
+## Current State
+
+111 commits on main. Clean tree. 0 shellcheck errors. All tests pass. (shellcheck + tests + PowerShell install). Linux CI: shellcheck + tests.

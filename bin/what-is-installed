@@ -55,6 +55,7 @@ ALL_SECTION_START=()
 
 SYSTEM_DIRS="$(get_system_dirs)"
 FAMILY_SKIP="$(get_family_skip_patterns)"
+GUI_SKIP="$(get_gui_skip_patterns)"
 
 PATH_DIRS=()
 OLD_IFS="$IFS"
@@ -90,6 +91,9 @@ for dir in "${PATH_DIRS[@]}"; do
 
     # Architecture suffix skip
     [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]] && continue
+
+    # GUI-only tool skip (prevents launching windows)
+    [[ -n "$GUI_SKIP" && "$name" =~ $GUI_SKIP ]] && continue
 
     # Blocklist patterns
     case "$name" in

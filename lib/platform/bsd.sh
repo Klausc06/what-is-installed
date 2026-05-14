@@ -9,6 +9,12 @@ get_family_skip_patterns() {
   printf '%s' ''
 }
 
+get_gui_skip_patterns() {
+  # BSD base systems have few GUI tools in PATH.
+  # Primarily X11 utilities and desktop-environment launchers.
+  printf '%s' '^(xdg-open|notify-send|zenity|xterm|xclock|xlogo|xeyes|xcalc|xedit|xman|xclipboard|startx|xinit|gvfs-open)$'
+}
+
 get_accel_env() {
   printf '%s' ''
 }

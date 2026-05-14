@@ -291,4 +291,31 @@ Windows CI: ✅ all-green
 
 ## Current State
 
-123 commits on main. 0 shellcheck errors, 2 tests pass. Linux CI: shellcheck + tests + smoke (install + run). Windows CI: shellcheck + tests. PowerShell CI: install.ps1 e2e + tests.
+131 commits on main. 0 shellcheck errors, 2 tests pass. Linux CI: shellcheck + tests + smoke (install + run). Windows CI: shellcheck + tests. PowerShell CI: install.ps1 e2e + tests.
+
+## 2026-05-14 — Performance + Safety Session (Hermes)
+
+### Base merge (1313bab)
+- Reset main to origin/main (v0.4.1 + code review fixes)
+- Cherry-picked 3 improvements from backup/phase-1-3:
+  - `declare -f` guards on all 9 provider dispatch calls (resolve.sh)
+  - Insertion sort (_sort_cache) + binary search (_cache_lookup) in shared.sh
+  - Two-pass loop structure: Pass 1 collect candidates, Pass 2 probe versions
+
+### Parallel probing (d588c91)
+- Reduced probe timeout 1s → 0.3s (most tools return in ~10ms)
+- Pass 2 refactored to 32-way parallel batch probing (subshell + wait)
+- Result: 16.5s → 4.5s (3.7x speedup on macOS, 366 candidates)
+
+### GUI skip filter (e28411c)
+- Added `get_gui_skip_patterns()` to all 4 platform files
+- Wired `GUI_SKIP` into Pass 1 candidate collection
+- Blacklists per platform:
+  - Windows: ~40 system GUI tools (notepad, mspaint, explorer, regedit...)
+  - Linux: ~30 desktop GUI tools (xdg-open, zenity, gnome-terminal...)
+  - BSD: ~9 X11 utilities (xterm, xclock, startx...)
+  - macOS: empty (GUI apps live in /Applications/*.app, not PATH)
+- Fixes: friend's classroom monitoring detecting window launches during probing
+
+### Session Stats
+- 3 commits pushed. Local backup retained as `backup/phase-1-3`

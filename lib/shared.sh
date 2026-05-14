@@ -6,6 +6,46 @@ CACHE_VALS=()
 _CACHE_STR=$'\n'
 VERSION_RESULT=""
 
+# ── Cache utilities (Bash 3.2 compatible — no associative arrays) ──
+
+# Insertion sort on CACHE_NAMES (ascending), moving CACHE_VALS in lockstep.
+# O(n^2) but n < 200 in practice. Called once after providers complete.
+_sort_cache() {
+  local n=${#CACHE_NAMES[@]} i j key_name key_val
+  (( n < 2 )) && return
+  for ((i = 1; i < n; i++)); do
+    key_name="${CACHE_NAMES[$i]}"
+    key_val="${CACHE_VALS[$i]}"
+    j=$i
+    while (( j > 0 )) && [[ "${CACHE_NAMES[$((j-1))]}" > "$key_name" ]]; do
+      CACHE_NAMES[$j]="${CACHE_NAMES[$((j-1))]}"
+      CACHE_VALS[$j]="${CACHE_VALS[$((j-1))]}"
+      ((j--))
+    done
+    CACHE_NAMES[$j]="$key_name"
+    CACHE_VALS[$j]="$key_val"
+  done
+}
+
+# Binary search on sorted CACHE_NAMES.
+# Sets _CACHE_INDEX if found; returns 0 if found, 1 if not found.
+_cache_lookup() {
+  local needle="$1" low=0 high mid
+  high=$((${#CACHE_NAMES[@]} - 1))
+  while (( low <= high )); do
+    mid=$(( (low + high) / 2 ))
+    if [[ "${CACHE_NAMES[$mid]}" < "$needle" ]]; then
+      low=$((mid + 1))
+    elif [[ "${CACHE_NAMES[$mid]}" > "$needle" ]]; then
+      high=$((mid - 1))
+    else
+      _CACHE_INDEX=$mid
+      return 0
+    fi
+  done
+  return 1
+}
+
 short_path() {
   local p="$1"
   p="${p/#$HOME/~}"
@@ -70,10 +110,11 @@ run_with_timeout() {
 get_command_version() {
   local cmd="$1" env_prefix output first_line
 
-  if [[ "$_CACHE_STR" == *$'\n'"$cmd="* ]]; then
-    local _entry="${_CACHE_STR#*$'\n'"$cmd="}"
-    VERSION_RESULT="${_entry%%$'\n'*}"
-    return
+  if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
+    if _cache_lookup "$cmd"; then
+      VERSION_RESULT="${CACHE_VALS[$_CACHE_INDEX]}"
+      return
+    fi
   fi
 
   env_prefix="$(get_accel_env "$cmd")"
@@ -115,9 +156,4 @@ get_command_version() {
   CACHE_VALS+=("$result")
   _CACHE_STR+="$cmd=$result"$'\n'
   VERSION_RESULT="$result"
-
-  _PROBE_COUNT=$(( ${_PROBE_COUNT:-0} + 1 ))
-  if [[ $(( _PROBE_COUNT % 20 )) -eq 0 ]]; then
-    printf '.' >&2
-  fi
 }

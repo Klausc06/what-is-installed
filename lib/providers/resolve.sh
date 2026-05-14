@@ -12,29 +12,31 @@ _wi_provider_name_exists() {
 }
 
 resolve_providers() {
-  command -v cargo >/dev/null 2>&1 && cargo_provider
+  command -v cargo >/dev/null 2>&1 && declare -f cargo_provider >/dev/null 2>&1 && cargo_provider
 
   case "$_PLATFORM_OS" in
     macos|linux|bsd)
-      command -v brew >/dev/null 2>&1 && brew_provider
+      command -v brew >/dev/null 2>&1 && declare -f brew_provider >/dev/null 2>&1 && brew_provider
       ;;
   esac
 
   case "$_PLATFORM_OS" in
     mingw|cygwin)
-      command -v winget >/dev/null 2>&1 && winget_provider
-      command -v scoop >/dev/null 2>&1 && scoop_provider
-      command -v choco >/dev/null 2>&1 && choco_provider
+      command -v winget >/dev/null 2>&1 && declare -f winget_provider >/dev/null 2>&1 && winget_provider
+      command -v scoop >/dev/null 2>&1 && declare -f scoop_provider >/dev/null 2>&1 && scoop_provider
+      command -v choco >/dev/null 2>&1 && declare -f choco_provider >/dev/null 2>&1 && choco_provider
       ;;
   esac
 
   case "$_PLATFORM_OS" in
     linux|bsd)
-      command -v dpkg-query >/dev/null 2>&1 && apt_provider
-      command -v rpm >/dev/null 2>&1 && rpm_provider
-      command -v pacman >/dev/null 2>&1 && pacman_provider
-      command -v snap >/dev/null 2>&1 && snap_provider
-      command -v flatpak >/dev/null 2>&1 && flatpak_provider
+      command -v dpkg-query >/dev/null 2>&1 && declare -f apt_provider >/dev/null 2>&1 && apt_provider
+      command -v rpm >/dev/null 2>&1 && declare -f rpm_provider >/dev/null 2>&1 && rpm_provider
+      command -v pacman >/dev/null 2>&1 && declare -f pacman_provider >/dev/null 2>&1 && pacman_provider
+      command -v snap >/dev/null 2>&1 && declare -f snap_provider >/dev/null 2>&1 && snap_provider
+      command -v flatpak >/dev/null 2>&1 && declare -f flatpak_provider >/dev/null 2>&1 && flatpak_provider
       ;;
   esac
+
+  _sort_cache
 }

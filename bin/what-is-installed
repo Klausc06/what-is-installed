@@ -48,10 +48,6 @@ setup_glyphs
 
 resolve_providers
 
-_seen_names_str=$'\n'
-_seen_family_ver_str=$'\n'
-_PROBE_COUNT=0
-
 ALL_SECTION_DIRS=()
 ALL_SECTION_ITEMS=()
 ALL_SECTION_COUNTS=()
@@ -61,22 +57,26 @@ SYSTEM_DIRS="$(get_system_dirs)"
 FAMILY_SKIP="$(get_family_skip_patterns)"
 
 PATH_DIRS=()
-_seen_dirs=$'\n'
 OLD_IFS="$IFS"
 IFS=':'
 for dir in $PATH; do
-  [[ "$_seen_dirs" == *$'\n'"$dir"$'\n'* ]] && continue
-  _seen_dirs+="$dir"$'\n'
   PATH_DIRS+=("$dir")
 done
 IFS="$OLD_IFS"
 
+# ── Pass 1: Collect candidates (name-only filters, no version probing) ──
+CANDIDATE_NAMES=()
+CANDIDATE_PATHS=()
+CANDIDATE_SECTIONS=()
+_seen_dirs=$'\n'
+_seen_names_str=$'\n'
+
 for dir in "${PATH_DIRS[@]}"; do
   [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
+  [[ "$_seen_dirs" == *$'\n'"$dir"$'\n'* ]] && continue
+  _seen_dirs+="$dir"$'\n'
 
   label="$(section_label "$dir")"
-  section_items_before=${#ALL_SECTION_ITEMS[@]}
-  has_items=false
 
   shopt -s nullglob
   for path in "$dir"/*; do
@@ -85,12 +85,13 @@ for dir in "${PATH_DIRS[@]}"; do
 
     name="${path##*/}"
 
+    # Dedup by name
     [[ "$_seen_names_str" == *$'\n'"$name"$'\n'* ]] && continue
 
-    if [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]]; then
-      continue
-    fi
+    # Architecture suffix skip
+    [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]] && continue
 
+    # Blocklist patterns
     case "$name" in
       *-config|*.py) continue ;;
     esac
@@ -98,35 +99,88 @@ for dir in "${PATH_DIRS[@]}"; do
     # Skip the tool itself (prevents recursive probing)
     [[ "$name" == "what-is-installed" ]] && continue
 
-    family="${name%-*}"
-    [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
-    [[ "$family" == "$name" ]] && family=""
-
-    get_command_version "$name"
-    ver="$VERSION_RESULT"
-    [[ "$ver" == "-" ]] && continue
-
-    if [[ -n "$family" ]]; then
-      [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
-    fi
-
     _seen_names_str+="$name"$'\n'
-    [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
-
-    ALL_SECTION_ITEMS+=("$name|$ver|$path")
-    has_items=true
+    CANDIDATE_NAMES+=("$name")
+    CANDIDATE_PATHS+=("$path")
+    CANDIDATE_SECTIONS+=("$label")
   done
   shopt -u nullglob
+done
 
-  if [[ "$has_items" == true ]]; then
-    count=$(( ${#ALL_SECTION_ITEMS[@]} - section_items_before ))
-    ALL_SECTION_DIRS+=("$label")
-    ALL_SECTION_START+=("$section_items_before")
-    ALL_SECTION_COUNTS+=("$count")
+TOTAL_CANDIDATES=${#CANDIDATE_NAMES[@]}
+[[ $TOTAL_CANDIDATES -eq 0 ]] && { render_table; exit 0; }
+
+# ── Pass 2: Probe versions with progress ──
+_start_time=$SECONDS
+_done=0
+_current_section=""
+_section_start=0
+_seen_family_ver_str=$'\n'
+
+for i in "${!CANDIDATE_NAMES[@]}"; do
+  name="${CANDIDATE_NAMES[$i]}"
+  path="${CANDIDATE_PATHS[$i]}"
+  this_label="${CANDIDATE_SECTIONS[$i]}"
+
+  # Probe version (cache check happens inside get_command_version)
+  get_command_version "$name"
+  ver="$VERSION_RESULT"
+  [[ "$ver" == "-" ]] && continue
+
+  # Family+version dedup (post-probe, needs version)
+  family="${name%-*}"
+  [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
+  [[ "$family" == "$name" ]] && family=""
+
+  if [[ -n "$family" ]]; then
+    [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
+  fi
+
+  [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
+
+  # Accepted — add to results
+  ver_index=${#ALL_SECTION_ITEMS[@]}
+  ALL_SECTION_ITEMS+=("$name|$ver|$path")
+
+  # Track section boundaries (detect label transitions between accepted tools)
+  if [[ "$this_label" != "$_current_section" ]]; then
+    if [[ -n "$_current_section" ]]; then
+      ALL_SECTION_COUNTS+=($(( ver_index - _section_start )))
+    fi
+    _current_section="$this_label"
+    _section_start=$ver_index
+    ALL_SECTION_DIRS+=("$_current_section")
+    ALL_SECTION_START+=($_section_start)
+  fi
+
+  # Progress display (stderr, TTY-guarded)
+  _done=$((_done + 1))
+  if [[ -t 2 ]]; then
+    _pct=$(( (_done * 100) / TOTAL_CANDIDATES ))
+    _elapsed=$(( SECONDS - _start_time ))
+    if (( _done > 0 && _elapsed > 0 )); then
+      _eta=$(( (_elapsed * (TOTAL_CANDIDATES - _done)) / _done ))
+      if (( _eta >= 60 )); then
+        _eta_display="$(( _eta / 60 ))m$(( _eta % 60 ))s"
+      else
+        _eta_display="${_eta}s"
+      fi
+    else
+      _eta_display="..."
+    fi
+    printf '\r[%d/%d] %d%% | ETA: %s  ' "$_done" "$TOTAL_CANDIDATES" "$_pct" "$_eta_display" >&2
   fi
 done
 
-[[ ${_PROBE_COUNT:-0} -gt 0 ]] && printf '\n' >&2
+# Close final section
+if [[ -n "$_current_section" ]]; then
+  ALL_SECTION_COUNTS+=($(( ${#ALL_SECTION_ITEMS[@]} - _section_start )))
+fi
+
+# Clear progress line (TTY-guarded)
+if [[ -t 2 ]]; then
+  printf '\r\033[K' >&2
+fi
 
 # ── render ──────────────────────────────────────────────
 

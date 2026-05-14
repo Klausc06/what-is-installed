@@ -23,6 +23,7 @@ jobs:
         run: |
           bash install.sh
           export PATH="$HOME/.local/bin:$PATH"
+          set -o pipefail
           NO_COLOR=1 what-is-installed 2>&1 | head -15
 
   windows:
@@ -58,7 +59,7 @@ jobs:
         run: |
           ./install.ps1
           $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
-          bash -c "what-is-installed" 2>&1 | head -5
+          bash -c "set -o pipefail; what-is-installed 2>&1 | head -5"
 
       - name: Run tests after PowerShell install
         shell: bash

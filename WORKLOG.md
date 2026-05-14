@@ -319,3 +319,20 @@ Windows CI: ✅ all-green
 
 ### Session Stats
 - 3 commits pushed. Local backup retained as `backup/phase-1-3`
+
+## 2026-05-15 — Windows Git Bash Regression Fix (Codex)
+
+### Fixed
+- Restored the platform contract by adding `get_gui_skip_patterns()` to macOS and Windows platform modules.
+- Rejected non-GNU `timeout.exe` so Windows Git Bash does not swallow version probes.
+- Kept the 0.3s fast path for GNU `timeout` / `gtimeout`, but raised the shell fallback floor to 5s so normal scripts are not killed before they print versions.
+- Parallel probes now use the collected candidate executable path while keeping provider cache lookup keyed by command name.
+- CI smoke steps now enable `pipefail` before piping `what-is-installed` through `head`.
+
+### Tests
+- Added regression coverage for platform function contracts, fractional timeout fallback, Windows timeout simulation, and candidate-path probing.
+- Verified: `bash tests/run.sh`, `shellcheck --severity=error bin/what-is-installed lib/*.sh lib/platform/*.sh lib/providers/*.sh install.sh tests/run.sh`, `NO_COLOR=1 bash bin/what-is-installed 2>&1 | head -20`, and a simulated Windows `timeout.exe` PATH run.
+
+### Current State
+- Clean-fix worktree: `/Users/klaus/Documents/Projects/what-is-installed-latest-fix`
+- Base: `origin/main` at `693a189`

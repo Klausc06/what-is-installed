@@ -45,8 +45,9 @@ mkdir -p "$BIN_DIR"
 case "$OS" in
   windows)
     # On Windows, bash symlinks don't work in CMD/PowerShell.
-    # Copy the script and create a .bat wrapper so it works everywhere.
+    # Copy the script and lib/ so relative source paths resolve.
     cp "$ROOT/bin/what-is-installed" "$BIN_DIR/what-is-installed"
+    cp -r "$ROOT/lib" "$HOME/.local/"
     cat > "$BIN_DIR/what-is-installed.bat" <<'BATEOF'
 @echo off
 title what-is-installed

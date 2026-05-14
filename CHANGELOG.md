@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.2 (2026-05-15)
+
+### Bug Fixes
+- **Missing `get_gui_skip_patterns` crashes on Windows and macOS**: The function was only defined in `linux.sh` and `bsd.sh`, but the main script calls it unconditionally on all platforms — causing `command not found` on Windows (MinGW/Cygwin) and a crash-on-start on macOS. Added the function to `windows.sh` (empty pattern) and `macOS.sh` (GUI-only tools: `open`, `say`, `screencapture`, etc.).
+- **`install.sh` doesn't copy `lib/` on Windows**: On macOS/Linux the installer symlinks the script, resolving `lib/` through the repo source. On Windows it copies only the binary, leaving `lib/` missing. The installer now copies `lib/` to `~/.local/lib/` on Windows.
+
 ## v0.4.1 (2026-05-12)
 
 ### Performance

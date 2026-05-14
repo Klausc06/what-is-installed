@@ -117,15 +117,18 @@ get_command_version() {
     fi
   fi
 
-  env_prefix="$(get_accel_env "$cmd")"
+  env_prefix=""
+  if declare -f get_accel_env >/dev/null 2>&1; then
+    env_prefix="$(get_accel_env "$cmd")"
+  fi
 
   local ec flag tmpout
   tmpout="$(mktemp)"
   for flag in --version -V; do
     if [[ -n "$env_prefix" ]]; then
-      run_with_timeout 1 env $env_prefix "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
+      run_with_timeout 0.3 env $env_prefix "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     else
-      run_with_timeout 1 "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
+      run_with_timeout 0.3 "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     fi
     output="$(tr -d '\0' <"$tmpout" 2>/dev/null)"
     if [[ -n "$output" || "$ec" -eq 124 ]]; then

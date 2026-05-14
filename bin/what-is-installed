@@ -110,51 +110,71 @@ done
 TOTAL_CANDIDATES=${#CANDIDATE_NAMES[@]}
 [[ $TOTAL_CANDIDATES -eq 0 ]] && { render_table; exit 0; }
 
-# ── Pass 2: Probe versions with progress ──
+# ── Pass 2: Parallel probe versions with progress ──
 _start_time=$SECONDS
 _done=0
 _current_section=""
 _section_start=0
 _seen_family_ver_str=$'\n'
+_BATCH_SIZE=32
+_PROBE_TMPDIR="$(mktemp -d)"
+_LIB_DIR="$SCRIPT_DIR/../lib"
 
-for i in "${!CANDIDATE_NAMES[@]}"; do
-  name="${CANDIDATE_NAMES[$i]}"
-  path="${CANDIDATE_PATHS[$i]}"
-  this_label="${CANDIDATE_SECTIONS[$i]}"
+batch=0
+while (( batch * _BATCH_SIZE < TOTAL_CANDIDATES )); do
+  batch_start=$((batch * _BATCH_SIZE))
+  batch_end=$((batch_start + _BATCH_SIZE))
+  (( batch_end > TOTAL_CANDIDATES )) && batch_end=$TOTAL_CANDIDATES
 
-  # Probe version (cache check happens inside get_command_version)
-  get_command_version "$name"
-  ver="$VERSION_RESULT"
-  [[ "$ver" == "-" ]] && continue
+  # Launch parallel probes (subshell inherits cache arrays)
+  for ((i=batch_start; i<batch_end; i++)); do
+    (
+      source "$_LIB_DIR/detect.sh"
+      source "$_LIB_DIR/shared.sh"
+      get_command_version "${CANDIDATE_NAMES[$i]}"
+      printf '%s' "$VERSION_RESULT" > "$_PROBE_TMPDIR/result_$i"
+    ) &
+  done
+  wait  # block until all probes in this batch finish
 
-  # Family+version dedup (post-probe, needs version)
-  family="${name%-*}"
-  [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
-  [[ "$family" == "$name" ]] && family=""
+  # Serial merge: dedup + section tracking relies on order
+  for ((i=batch_start; i<batch_end; i++)); do
+    ver="$(cat "$_PROBE_TMPDIR/result_$i" 2>/dev/null)"
+    [[ "$ver" == "-" || -z "$ver" ]] && continue
 
-  if [[ -n "$family" ]]; then
-    [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
-  fi
+    name="${CANDIDATE_NAMES[$i]}"
+    path="${CANDIDATE_PATHS[$i]}"
+    this_label="${CANDIDATE_SECTIONS[$i]}"
 
-  [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
+    # Family+version dedup
+    family="${name%-*}"
+    [[ "$family" == "$name" ]] && family="${name%%[0-9]*}"
+    [[ "$family" == "$name" ]] && family=""
 
-  # Accepted — add to results
-  ver_index=${#ALL_SECTION_ITEMS[@]}
-  ALL_SECTION_ITEMS+=("$name|$ver|$path")
-
-  # Track section boundaries (detect label transitions between accepted tools)
-  if [[ "$this_label" != "$_current_section" ]]; then
-    if [[ -n "$_current_section" ]]; then
-      ALL_SECTION_COUNTS+=($(( ver_index - _section_start )))
+    if [[ -n "$family" ]]; then
+      [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
     fi
-    _current_section="$this_label"
-    _section_start=$ver_index
-    ALL_SECTION_DIRS+=("$_current_section")
-    ALL_SECTION_START+=($_section_start)
-  fi
+    [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
+
+    # Accepted — add to results
+    ver_index=${#ALL_SECTION_ITEMS[@]}
+    ALL_SECTION_ITEMS+=("$name|$ver|$path")
+
+    # Section boundary tracking
+    if [[ "$this_label" != "$_current_section" ]]; then
+      if [[ -n "$_current_section" ]]; then
+        ALL_SECTION_COUNTS+=($(( ver_index - _section_start )))
+      fi
+      _current_section="$this_label"
+      _section_start=$ver_index
+      ALL_SECTION_DIRS+=("$_current_section")
+      ALL_SECTION_START+=($_section_start)
+    fi
+
+    _done=$((_done + 1))
+  done
 
   # Progress display (stderr, TTY-guarded)
-  _done=$((_done + 1))
   if [[ -t 2 ]]; then
     _pct=$(( (_done * 100) / TOTAL_CANDIDATES ))
     _elapsed=$(( SECONDS - _start_time ))
@@ -170,7 +190,11 @@ for i in "${!CANDIDATE_NAMES[@]}"; do
     fi
     printf '\r[%d/%d] %d%% | ETA: %s  ' "$_done" "$TOTAL_CANDIDATES" "$_pct" "$_eta_display" >&2
   fi
+
+  ((batch++))
 done
+
+rm -rf "$_PROBE_TMPDIR"
 
 # Close final section
 if [[ -n "$_current_section" ]]; then

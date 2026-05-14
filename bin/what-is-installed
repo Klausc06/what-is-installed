@@ -133,9 +133,7 @@ while (( batch * _BATCH_SIZE < TOTAL_CANDIDATES )); do
   # Launch parallel probes (subshell inherits cache arrays)
   for ((i=batch_start; i<batch_end; i++)); do
     (
-      source "$_LIB_DIR/detect.sh"
-      source "$_LIB_DIR/shared.sh"
-      get_command_version "${CANDIDATE_NAMES[$i]}"
+      get_command_version "${CANDIDATE_PATHS[$i]}" "${CANDIDATE_NAMES[$i]}"
       printf '%s' "$VERSION_RESULT" > "$_PROBE_TMPDIR/result_$i"
     ) &
   done

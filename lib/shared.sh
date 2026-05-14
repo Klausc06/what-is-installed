@@ -66,12 +66,17 @@ run_with_timeout() {
   shift
   tmpfile="$(mktemp)"
 
-  # Prefer GNU timeout if available (fast, reliable across platforms)
-  # macOS Homebrew installs it as gtimeout (coreutils)
+  # Prefer GNU timeout if available (fast, reliable across platforms).
+  # Windows has a different timeout.exe that pauses instead of running commands.
   local timeout_cmd=""
   if command -v timeout >/dev/null 2>&1; then
-    timeout_cmd="timeout"
-  elif command -v gtimeout >/dev/null 2>&1; then
+    local _timeout_version
+    _timeout_version="$(timeout --version 2>&1 || true)"
+    if [[ "$_timeout_version" == *GNU* || "$_timeout_version" == *coreutils* ]]; then
+      timeout_cmd="timeout"
+    fi
+  fi
+  if [[ -z "$timeout_cmd" ]] && command -v gtimeout >/dev/null 2>&1; then
     timeout_cmd="gtimeout"
   fi
   if [[ -n "$timeout_cmd" ]]; then
@@ -82,7 +87,8 @@ run_with_timeout() {
     # (background { sleep; kill; } & fails on Windows Git Bash)
     "$@" >"$tmpfile" 2>&1 &
     pid=$!
-    local max_ticks=$((timeout * 5))
+    local max_ticks
+    max_ticks="$(awk -v timeout="$timeout" 'BEGIN { ticks = int((timeout / 0.2) + 0.999); if (ticks < 25) ticks = 25; print ticks }')"
     waited=0
     while kill -0 "$pid" 2>/dev/null && [[ $waited -lt $max_ticks ]]; do
       sleep 0.2
@@ -108,10 +114,10 @@ run_with_timeout() {
 }
 
 get_command_version() {
-  local cmd="$1" env_prefix output first_line
+  local cmd="$1" cmd_name="${2:-${1##*/}}" env_prefix output first_line
 
   if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
-    if _cache_lookup "$cmd"; then
+    if _cache_lookup "$cmd_name"; then
       VERSION_RESULT="${CACHE_VALS[$_CACHE_INDEX]}"
       return
     fi
@@ -119,7 +125,7 @@ get_command_version() {
 
   env_prefix=""
   if declare -f get_accel_env >/dev/null 2>&1; then
-    env_prefix="$(get_accel_env "$cmd")"
+    env_prefix="$(get_accel_env "$cmd_name")"
   fi
 
   local ec flag tmpout
@@ -155,8 +161,8 @@ get_command_version() {
     fi
   fi
 
-  CACHE_NAMES+=("$cmd")
+  CACHE_NAMES+=("$cmd_name")
   CACHE_VALS+=("$result")
-  _CACHE_STR+="$cmd=$result"$'\n'
+  _CACHE_STR+="$cmd_name=$result"$'\n'
   VERSION_RESULT="$result"
 }

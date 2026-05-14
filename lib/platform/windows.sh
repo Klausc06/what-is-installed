@@ -11,6 +11,10 @@ get_family_skip_patterns() {
   printf '%s' ''
 }
 
+get_gui_skip_patterns() {
+  printf '%s' ''
+}
+
 get_accel_env() {
   printf '%s' ''
 }

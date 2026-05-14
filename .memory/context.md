@@ -4,10 +4,10 @@
 - `main` — primary development branch
 
 ## Current State
-- 123 commits — v0.4.1: O(1) lookups, hoist extglob, dedup brew_provider, single-pass render, install.sh desktop crash fix, code review polish
-- Working tree clean
-- 0 shellcheck errors, 2 tests pass
-- Bug fix: `detect_desktop_dir()` crash on headless Linux — validates xdg-user-dir path with `[[ -d ]]` before returning, Windows Desktop check gated on OS, code review polish (timeout diagnostic, `skip()` reason param, `local` hoisted)
+- 129 commits at base `origin/main` (`693a189`) plus pending 2026-05-15 Windows Git Bash regression fix in `/Users/klaus/Documents/Projects/what-is-installed-latest-fix`
+- Working tree has focused fixes for missing `get_gui_skip_patterns`, non-GNU Windows `timeout.exe`, 5s fallback timeout floor, candidate-path probing, and CI pipefail
+- 0 shellcheck errors at severity=error; `bash tests/run.sh` passes
+- Regression coverage includes platform function contracts, fractional timeout fallback, Windows timeout simulation, and candidate-path probing
 - Windows CI: .github/workflows/ci.yml (windows-latest, shell: bash, shellcheck + tests + new powershell-install job)
 - CRLF safety: git config core.autocrlf=false, sed strip before shellcheck
 - Current working path: `/Users/klaus/WorkBuddy/what-is-installed`

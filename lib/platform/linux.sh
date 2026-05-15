@@ -15,13 +15,6 @@ get_gui_skip_patterns() {
   printf '%s' '^(xdg-open|notify-send|zenity|kdialog|gvfs-open|gvfs-mount|gvfs-set-attribute|gvfs-copy|gvfs-move|gvfs-rm|gvfs-mkdir|gvfs-monitor-dir|gvfs-monitor-file|gvfs-ls|gvfs-info|gvfs-cat|gvfs-tree|gvfs-save|gnome-open|kde-open|exo-open|gvfsd|gvfsd-metadata|gnome-terminal|konsole|xterm|gucharmap|gnome-calculator|baobab|eog|evince|gedit|gnome-text-editor|nautilus|totem|yelp|systemctl|journalctl)$'
 }
 
-get_accel_env() {
-  case "$1" in
-    brew) printf '%s' 'HOMEBREW_NO_AUTO_UPDATE=1' ;;
-    *)    printf '%s' '' ;;
-  esac
-}
-
 section_label() {
   case "$1" in
     */.local/bin)      printf '%s' 'User Local' ;;

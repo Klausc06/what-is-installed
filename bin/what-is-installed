@@ -74,7 +74,7 @@ _seen_names_str=$'\n'
 
 for dir in "${PATH_DIRS[@]}"; do
   [[ "$dir" =~ $SYSTEM_DIRS || -z "$dir" || ! -d "$dir" ]] && continue
-  [[ "$_seen_dirs" == *$'\n'"$dir"$'\n'* ]] && continue
+  [[ "$_seen_dirs" == *$'\n'"$(_escape_glob "$dir")"$'\n'* ]] && continue
   _seen_dirs+="$dir"$'\n'
 
   label="$(section_label "$dir")"
@@ -87,7 +87,7 @@ for dir in "${PATH_DIRS[@]}"; do
     name="${path##*/}"
 
     # Dedup by name
-    [[ "$_seen_names_str" == *$'\n'"$name"$'\n'* ]] && continue
+    [[ "$_seen_names_str" == *$'\n'"$(_escape_glob "$name")"$'\n'* ]] && continue
 
     # Architecture suffix skip
     [[ -n "$FAMILY_SKIP" && "$name" =~ $FAMILY_SKIP ]] && continue
@@ -121,7 +121,8 @@ _current_section=""
 _section_start=0
 _seen_family_ver_str=$'\n'
 _BATCH_SIZE=32
-_PROBE_TMPDIR="$(mktemp -d)"
+_PROBE_TMPDIR="$(mktemp -d)" || { echo "ERROR: mktemp failed" >&2; exit 1; }
+trap 'rm -rf "$_PROBE_TMPDIR"' EXIT
 _LIB_DIR="$SCRIPT_DIR/../lib"
 
 batch=0
@@ -156,7 +157,7 @@ while (( batch * _BATCH_SIZE < TOTAL_CANDIDATES )); do
     [[ "$family" == "$name" ]] && family=""
 
     if [[ -n "$family" ]]; then
-      [[ "$_seen_family_ver_str" == *$'\n'"$family|$ver"$'\n'* ]] && continue
+      [[ "$_seen_family_ver_str" == *$'\n'"$(_escape_glob "$family|$ver")"$'\n'* ]] && continue
     fi
     [[ -n "$family" ]] && _seen_family_ver_str+="$family|$ver"$'\n'
 
@@ -172,7 +173,7 @@ while (( batch * _BATCH_SIZE < TOTAL_CANDIDATES )); do
       _current_section="$this_label"
       _section_start=$ver_index
       ALL_SECTION_DIRS+=("$_current_section")
-      ALL_SECTION_START+=($_section_start)
+      ALL_SECTION_START+=("$_section_start")
     fi
 
     _done=$((_done + 1))
@@ -198,7 +199,6 @@ while (( batch * _BATCH_SIZE < TOTAL_CANDIDATES )); do
   ((batch++))
 done
 
-rm -rf "$_PROBE_TMPDIR"
 
 # Close final section
 if [[ -n "$_current_section" ]]; then

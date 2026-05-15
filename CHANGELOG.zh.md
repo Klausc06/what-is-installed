@@ -1,5 +1,30 @@
 # 更新日志
 
+
+## v0.4.3（2026-05-16）
+
+### 安全
+- **去重 glob 元字符转义**：PATH 目录和命令名含 `[]*?` 字符可能导致去重误判。添加 `_escape_glob()` 辅助函数，应用到全部三处去重点。
+- **临时目录信号清理**：`_PROBE_TMPDIR` 仅在正常退出时删除——被 kill 或中断会残留临时目录。添加 `trap ... EXIT`。
+- **mktemp 失败处理**：两处 `mktemp` 调用失败时静默继续，导致下游混乱错误。现在都输出清晰错误消息并优雅退出。
+
+### 重构
+- **删除死渲染代码**：`render_json`、`render_csv`、`render_plain`、`dispatch_render`（占 `lib/render.sh` 46%）从未被调用——已删除（-85 行）。
+- **去重 `get_accel_env`**：`macos.sh` 和 `linux.sh` 中完全相同的函数——提取到 `lib/shared.sh`。
+- **删除未使用变量 `C_RED`**：定义但从未引用。
+
+### 代码质量
+- 引用 `$env_prefix`。
+- 引用数组追加中的 `$_section_start`。
+- 简化 `get_accel_env` 分发——移除冗余的 `declare -f` 守卫。
+
+## v0.4.2（2026-05-15）
+
+### Bug 修复
+- **`get_gui_skip_patterns` 缺失导致 Windows/macOS 崩溃**：该函数仅在 `linux.sh` 和 `bsd.sh` 中定义，但主脚本在所有平台无条件调用——在 Windows 和 macOS 上导致 `command not found`。已在 `windows.sh` 和 `macos.sh` 中添加。
+- **Windows 下 `install.sh` 不复制 `lib/`**：安装器现在在 Windows 上将 `lib/` 复制到 `~/.local/lib/`。
+
+
 ## v0.4.1（2026-05-12）
 
 ### 性能优化

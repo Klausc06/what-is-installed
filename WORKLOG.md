@@ -319,3 +319,28 @@ Windows CI: ✅ all-green
 
 ### Session Stats
 - 3 commits pushed. Local backup retained as `backup/phase-1-3`
+
+## 2026-05-16 — Code Quality & Security Session (Claude Code)
+
+### Security fixes
+- Added `_escape_glob()` helper — escapes `[]*?` metacharacters in glob patterns
+- Applied escaping to all three dedup points (directory, name, family+version)
+- Added `trap ... EXIT` for `_PROBE_TMPDIR` cleanup on signal/interrupt
+- Added mktemp failure checks (2 locations) with clear error messages
+
+### Dead code removal
+- Removed `render_json`, `render_csv`, `render_plain`, `dispatch_render` from `lib/render.sh` (-85 lines, 46% of file)
+- Removed unused `C_RED` color variable
+
+### Deduplication
+- Extracted `get_accel_env` from `macos.sh` and `linux.sh` into `lib/shared.sh` (-14 lines across 2 files)
+- Simplified dispatch — removed redundant `declare -f` guard
+
+### Code quality
+- Quoted `$env_prefix` in `get_command_version` (`env "$env_prefix"` instead of `env $env_prefix`)
+- Quoted `$_section_start` in array append
+
+### Session Stats
+- 6 files changed, +39/-116 (net -77 lines)
+- ShellCheck: 0 errors, 5 warnings (all pre-existing cross-file false positives)
+- Bench: unchanged at 4s avg

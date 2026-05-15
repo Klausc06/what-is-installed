@@ -1,5 +1,24 @@
 # Changelog
 
+
+## v0.4.3 (2026-05-16)
+
+### Security
+- **Glob metacharacter escaping in dedup**: PATH directories and command names containing `[]*?` characters could cause false-positive dedup matches. Added `_escape_glob()` helper and applied to all three dedup points (directory, name, family+version).
+- **Temp dir cleanup on signal**: `_PROBE_TMPDIR` was only removed on clean exit — killed or interrupted processes leaked temp directories. Added `trap ... EXIT`.
+- **mktemp failure handling**: Two `mktemp` calls silently continued on failure. Both now emit clear error messages and exit/return gracefully.
+
+### Refactoring
+- **Remove dead rendering code**: `render_json`, `render_csv`, `render_plain`, `dispatch_render` (46% of `lib/render.sh`) never called — removed (-85 lines).
+- **Deduplicate `get_accel_env`**: Identical function in `macos.sh` and `linux.sh` — extracted to `lib/shared.sh`.
+- **Remove unused `C_RED` color variable**: Defined but never referenced.
+
+### Code Quality
+- Quote `$env_prefix` in `get_command_version`.
+- Quote `$_section_start` in array append.
+- Simplify `get_accel_env` dispatch — removed redundant `declare -f` guard.
+
+
 ## v0.4.2 (2026-05-15)
 
 ### Bug Fixes

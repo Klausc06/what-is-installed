@@ -1,6 +1,4 @@
 # shellcheck shell=bash
-# Reserved: render_json, render_csv, render_plain, dispatch_render are
-# not currently called (render_table is used directly) but kept for future use.
 setup_glyphs() {
   if [[ -n "$ASCII_MODE" ]]; then
     B_TL='+' B_TR='+' B_BL='+' B_BR='+'
@@ -15,7 +13,7 @@ setup_glyphs() {
 
 setup_colors() {
   if [[ -n "$NO_COLOR" ]] || [[ ! -t 1 ]]; then
-    C_RESET='' C_BOLD='' C_DIM='' C_CYAN='' C_GREEN='' C_YELLOW='' C_BLUE='' C_MAGENTA='' C_RED=''
+    C_RESET='' C_BOLD='' C_DIM='' C_CYAN='' C_GREEN='' C_YELLOW='' C_BLUE='' C_MAGENTA=''
   else
     C_RESET=$'\033[0m'
     C_BOLD=$'\033[1m'
@@ -156,90 +154,4 @@ render_table() {
 
     printf '\n'
   done
-}
-
-render_json() {
-  local si j start count entry ename ever epath label
-  local first=true
-
-  printf '['
-  for si in "${!ALL_SECTION_DIRS[@]}"; do
-    label="${ALL_SECTION_DIRS[$si]}"
-    start="${ALL_SECTION_START[$si]}"
-    count="${ALL_SECTION_COUNTS[$si]}"
-    for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      if [[ "$first" != true ]]; then
-        printf ','
-      fi
-      first=false
-      printf '\n  {"name":"%s","version":"%s","path":"%s","section":"%s"}' \
-        "$(json_escape "$ename")" \
-        "$(json_escape "$ever")" \
-        "$(json_escape "$epath")" \
-        "$(json_escape "$label")"
-    done
-  done
-  printf '\n]\n'
-}
-
-render_csv() {
-  local si j start count entry ename ever epath label field first
-
-  printf 'Name,Version,Path,Section\n'
-  for si in "${!ALL_SECTION_DIRS[@]}"; do
-    label="${ALL_SECTION_DIRS[$si]}"
-    start="${ALL_SECTION_START[$si]}"
-    count="${ALL_SECTION_COUNTS[$si]}"
-    for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      first=true
-      for field in "$ename" "$ever" "$epath" "$label"; do
-        if [[ "$first" != true ]]; then
-          printf ','
-        fi
-        first=false
-        csv_field "$field"
-      done
-      printf '\n'
-    done
-  done
-}
-
-render_plain() {
-  local max_name=4 max_ver=7 max_path=4
-  local si j start count entry ename ever epath
-
-  for si in "${!ALL_SECTION_DIRS[@]}"; do
-    start="${ALL_SECTION_START[$si]}"
-    count="${ALL_SECTION_COUNTS[$si]}"
-    for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      [[ ${#ename} -gt $max_name ]] && max_name=${#ename}
-      [[ ${#ever}  -gt $max_ver  ]] && max_ver=${#ever}
-      [[ ${#epath} -gt $max_path ]] && max_path=${#epath}
-    done
-  done
-
-  for si in "${!ALL_SECTION_DIRS[@]}"; do
-    start="${ALL_SECTION_START[$si]}"
-    count="${ALL_SECTION_COUNTS[$si]}"
-    for ((j = start; j < start + count; j++)); do
-      entry="${ALL_SECTION_ITEMS[$j]}"
-      IFS='|' read -r ename ever epath <<< "$entry"
-      printf '%-*s  %-*s  %-*s\n' "$max_name" "$ename" "$max_ver" "$ever" "$max_path" "$epath"
-    done
-  done
-}
-
-dispatch_render() {
-  case "$OUTPUT_FORMAT" in
-    json)  render_json ;;
-    csv)   render_csv ;;
-    plain) render_plain ;;
-    *)     render_table ;;
-  esac
 }

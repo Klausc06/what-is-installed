@@ -13,13 +13,6 @@ get_gui_skip_patterns() {
   printf '%s' '^(open|say|pbcopy|pbpaste|screencapture|sips|osascript)$'
 }
 
-get_accel_env() {
-  case "$1" in
-    brew) printf '%s' 'HOMEBREW_NO_AUTO_UPDATE=1' ;;
-    *)    printf '%s' '' ;;
-  esac
-}
-
 section_label() {
   case "$1" in
     */.local/bin)      printf '%s' 'User Local' ;;

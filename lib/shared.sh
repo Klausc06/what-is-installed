@@ -61,17 +61,33 @@ repeat_char() {
   printf '%s' "$out"
 }
 
+_escape_glob() {
+  local val="$1"
+  val="${val//\\/\\\\}"
+  val="${val//\[/\\[}"
+  val="${val//\*/\\\*}"
+  val="${val//\?/\\\?}"
+  printf '%s' "$val"
+}
+
 run_with_timeout() {
   local timeout="${1:-2}" tmpfile pid exit_code waited
   shift
-  tmpfile="$(mktemp)"
+  tmpfile="$(mktemp)" || { echo "ERROR: mktemp failed" >&2; return 1; }
 
-  # Prefer GNU timeout if available (fast, reliable across platforms)
-  # macOS Homebrew installs it as gtimeout (coreutils)
+  # Prefer GNU timeout if available (fast, reliable across platforms).
+  # On Windows, C:\Windows\System32\timeout.exe is a completely different
+  # program that just pauses — it would swallow the command and break every
+  # version probe.  Detect and reject it.
   local timeout_cmd=""
   if command -v timeout >/dev/null 2>&1; then
-    timeout_cmd="timeout"
-  elif command -v gtimeout >/dev/null 2>&1; then
+    local _tout_ver
+    _tout_ver="$(timeout --version 2>&1 || true)"
+    if [[ "$_tout_ver" == *GNU* || "$_tout_ver" == *coreutils* || "$_tout_ver" == *Timeout* ]]; then
+      timeout_cmd="timeout"
+    fi
+  fi
+  if [[ -z "$timeout_cmd" ]] && command -v gtimeout >/dev/null 2>&1; then
     timeout_cmd="gtimeout"
   fi
   if [[ -n "$timeout_cmd" ]]; then
@@ -82,7 +98,14 @@ run_with_timeout() {
     # (background { sleep; kill; } & fails on Windows Git Bash)
     "$@" >"$tmpfile" 2>&1 &
     pid=$!
-    local max_ticks=$((timeout * 5))
+    # Bash can't do float arithmetic. Round fractional timeouts up to next
+    # second-equivalent so that e.g. 0.3 → 5 ticks (1.0s).
+    local max_ticks
+    if [[ "$timeout" == *.* ]]; then
+      max_ticks=$(( (${timeout%%.*} + 1) * 5 ))
+    else
+      max_ticks=$(( timeout * 5 ))
+    fi
     waited=0
     while kill -0 "$pid" 2>/dev/null && [[ $waited -lt $max_ticks ]]; do
       sleep 0.2
@@ -117,16 +140,13 @@ get_command_version() {
     fi
   fi
 
-  env_prefix=""
-  if declare -f get_accel_env >/dev/null 2>&1; then
-    env_prefix="$(get_accel_env "$cmd")"
-  fi
+  env_prefix="$(get_accel_env "$cmd")"
 
   local ec flag tmpout
-  tmpout="$(mktemp)"
+  tmpout="$(mktemp)" || { echo "ERROR: mktemp failed" >&2; VERSION_RESULT="-"; return; }
   for flag in --version -V; do
     if [[ -n "$env_prefix" ]]; then
-      run_with_timeout 0.3 env $env_prefix "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
+      run_with_timeout 0.3 env "$env_prefix" "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     else
       run_with_timeout 0.3 "$cmd" "$flag" >"$tmpout" 2>&1 && ec=0 || ec=$?
     fi

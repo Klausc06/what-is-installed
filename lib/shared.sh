@@ -70,6 +70,13 @@ _escape_glob() {
   printf '%s' "$val"
 }
 
+get_accel_env() {
+  case "$1" in
+    brew) printf '%s' 'HOMEBREW_NO_AUTO_UPDATE=1' ;;
+    *)    printf '%s' '' ;;
+  esac
+}
+
 run_with_timeout() {
   local timeout="${1:-2}" tmpfile pid exit_code waited
   shift

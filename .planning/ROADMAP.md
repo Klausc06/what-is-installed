@@ -6,7 +6,7 @@
 ## Milestones
 
 - ✅ **v0.4.3** — Current release (shipped)
-- 🚧 **v0.5.0** — P0+P1 fixes from full inspection (in progress)
+- ✅ **v0.5.0** — P0+P1 fixes from full inspection (shipped 2026-05-17)
 
 ## Phases
 
@@ -53,7 +53,8 @@
 **Depends on:** None
 **Artifacts:** `deliverables/gstack/security-audit-what-is-installed-2026-05-17.md`
 
-### Phase 5: CI & Code Quality 🟠 P1
+### Phase 5: CI & Code Quality ✅
+**Status:** Complete (commit b87f8d7)
 **Source:** Code review + QA testing (2026-05-17)
 **Goal:**
 - Add `macos-latest` CI runner (currently only ubuntu)

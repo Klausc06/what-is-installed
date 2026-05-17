@@ -97,7 +97,7 @@ for dir in "${PATH_DIRS[@]}"; do
 
     # Blocklist patterns
     case "$name" in
-      *-config|*.py) continue ;;
+      *-config|*.py|*.sh|*[[]*) continue ;;
     esac
 
     # Skip the tool itself (prevents recursive probing)

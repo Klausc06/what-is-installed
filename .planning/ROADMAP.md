@@ -28,7 +28,9 @@
 **Depends on:** None
 **Artifacts:** `deliverables/gstack/security-audit-what-is-installed-2026-05-17.md`
 
-### Phase 3: Cache & Bug Fixes 🟠 P1
+### Phase 3: Cache & Bug Fixes ✅
+**Status:** Complete (commit 73c0440)
+**Fix:** Cache loss resolved by Phase 1 (subshells inherit cache). `.sh` and `*[[]*` added to blocklist.
 **Source:** Code review + QA testing (2026-05-17)
 **Goal:**
 - Fix Pass 2 subshell cache loss (parallel probing re-probes cached tools, adds 30s+)

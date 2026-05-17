@@ -40,7 +40,8 @@
 **Depends on:** None
 **Artifacts:** `deliverables/gstack/code-review-what-is-installed-2026-05-17.md`, `deliverables/gstack/qa-test-what-is-installed-2026-05-17.md`
 
-### Phase 4: Security Hardening 🟠 P1
+### Phase 4: Security Hardening ✅
+**Status:** Complete (commit a72ca10)
 **Source:** Security audit (F-002..F-007) — 2026-05-17
 **Goal:**
 - Replace `eval "$_orig_extglob"` with `shopt -u extglob` boolean management (F-002)

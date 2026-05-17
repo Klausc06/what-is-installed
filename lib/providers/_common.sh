@@ -5,9 +5,11 @@
 # Args: timeout cmd regex
 _wi_provider_parse_regex() {
   local timeout="$1" cmd="$2" regex="$3"
-  local name ver _orig_extglob
+  local name ver _orig_extglob cmd_arr
   _orig_extglob="$(shopt -p extglob 2>/dev/null)"
   shopt -s extglob 2>/dev/null
+  # shellcheck disable=SC2206  # intentional word-split for "winget list"
+  cmd_arr=($cmd)
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
     if [[ "$line" =~ $regex ]]; then
@@ -16,6 +18,6 @@ _wi_provider_parse_regex() {
       name="${name%%+([[:space:]])}"
       _wi_provider_name_exists "$name" || _wi_cache_add "$name" "$ver"
     fi
-  done < <(run_with_timeout "$timeout" command $cmd 2>/dev/null)
+  done < <(run_with_timeout "$timeout" command "${cmd_arr[@]}" 2>/dev/null)
   eval "$_orig_extglob"
 }

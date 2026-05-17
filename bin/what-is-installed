@@ -105,7 +105,7 @@ for dir in "${PATH_DIRS[@]}"; do
 
     # Blocklist patterns
     case "$name" in
-      *-config|*.py|*.sh|*[[]*) continue ;;
+      *-config|*.py|*.sh|*[[]*) continue ;;  # *[[]* = names containing '['
     esac
 
     # Skip the tool itself (prevents recursive probing)

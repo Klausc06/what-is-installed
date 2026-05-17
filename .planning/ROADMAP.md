@@ -10,7 +10,9 @@
 
 ## Phases
 
-### Phase 1: Fix Test Suite 🔴 P0
+### Phase 1: Fix Test Suite ✅
+**Status:** Complete (commit 23a2ee8)
+**Fix:** Removed unnecessary subshell re-sourcing + changed version sentinel `-` → `?`
 **Source:** QA testing (2026-05-17)
 **Goal:** Fix broken test suite (2/2 fail, exit code 2, CI red). Root cause: custom tools in temp PATH dirs not appearing in output (unrecognized section_label), and `json_escape`/`csv_field` string comparison issues.
 **Impact:** CI is currently red on main — no reliable automated safety net.

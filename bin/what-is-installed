@@ -26,6 +26,14 @@ case "$_PLATFORM_OS" in
   *)       source "$SCRIPT_DIR/../lib/platform/windows.sh" ;;
 esac
 
+# Validate platform contract — all platform files must export these functions.
+for _fn in get_system_dirs get_family_skip_patterns get_gui_skip_patterns section_label section_color; do
+  if ! declare -F "$_fn" >/dev/null 2>&1; then
+    echo "ERROR: platform file missing required function: $_fn" >&2
+    exit 1
+  fi
+done
+
 # ── providers ───────────────────────────────────────────
 source "$SCRIPT_DIR/../lib/providers/cargo.sh"
 source "$SCRIPT_DIR/../lib/providers/brew.sh"

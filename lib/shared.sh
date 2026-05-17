@@ -28,7 +28,7 @@ _sort_cache() {
 }
 
 # Binary search on sorted CACHE_NAMES.
-# Sets _CACHE_INDEX if found; returns 0 if found, 1 if not found.
+# Sets _cache_index if found; returns 0 if found, 1 if not found.
 _cache_lookup() {
   local needle="$1" low=0 high mid
   high=$((${#CACHE_NAMES[@]} - 1))
@@ -39,7 +39,7 @@ _cache_lookup() {
     elif [[ "${CACHE_NAMES[$mid]}" > "$needle" ]]; then
       high=$((mid - 1))
     else
-      _CACHE_INDEX=$mid
+      _cache_index=$mid
       return 0
     fi
   done
@@ -81,6 +81,7 @@ run_with_timeout() {
   local timeout="${1:-2}" tmpfile pid exit_code waited
   shift
   tmpfile="$(mktemp)" || { echo "ERROR: mktemp failed" >&2; return 1; }
+  trap 'rm -f "${tmpfile:-}"' RETURN INT TERM
 
   # Prefer GNU timeout if available (fast, reliable across platforms).
   # On Windows, C:\Windows\System32\timeout.exe is a completely different
@@ -142,7 +143,7 @@ get_command_version() {
 
   if [[ ${#CACHE_NAMES[@]} -gt 0 ]]; then
     if _cache_lookup "$cmd"; then
-      VERSION_RESULT="${CACHE_VALS[$_CACHE_INDEX]}"
+      VERSION_RESULT="${CACHE_VALS[$_cache_index]}"
       return
     fi
   fi

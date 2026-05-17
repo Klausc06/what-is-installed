@@ -172,6 +172,38 @@ test_escape_glob() {
   [[ "$result" == 'a b' ]] || { echo "not ok - escape_glob space: expected 'a b', got '$result'"; FAIL=$((FAIL + 1)); }
 }
 
+test_scan_mode_version_column() {
+  local bin="$ROOT/bin/what-is-installed"
+  local out
+
+  # Non-TTY: output should have ? in version column
+  out="$(NO_COLOR=1 timeout 10 bash "$bin" 2>/dev/null || true)"
+  [[ -n "$out" ]] || { skip "tool produced no output" "scan version column"; return; }
+
+  # Verify version column contains ? (scan mode default)
+  printf '%s\n' "$out" | grep -q '?' || fail "scan output should show ? in version column"
+}
+
+test_non_tty_no_prompt() {
+  local bin="$ROOT/bin/what-is-installed"
+  local stderr_out
+
+  # Non-TTY (piped): should NOT show "Probe versions?" prompt
+  stderr_out="$(NO_COLOR=1 timeout 10 bash "$bin" 2>&1 >/dev/null || true)"
+  printf '%s\n' "$stderr_out" | grep -q 'Probe versions' && fail "non-TTY should not show probe prompt"
+}
+
+test_scan_mode_fast() {
+  local bin="$ROOT/bin/what-is-installed"
+
+  # Scan mode (non-TTY) should complete in under 3 seconds
+  local start end
+  start=$SECONDS
+  NO_COLOR=1 timeout 10 bash "$bin" >/dev/null 2>&1 || true
+  end=$SECONDS
+  (( end - start < 5 )) || fail "scan mode took $(( end - start ))s, expected < 5s"
+}
+
 test_path_order_keeps_first_directory
 test_json_and_csv_helpers
 test_cache_operations
@@ -180,6 +212,9 @@ test_get_command_version_basic
 test_platform_contract_functions
 test_json_csv_edge_cases
 test_escape_glob
+test_scan_mode_version_column
+test_non_tty_no_prompt
+test_scan_mode_fast
 
 [[ $FAIL -eq 0 ]] && printf 'ok - all tests passed\n'
 exit $FAIL

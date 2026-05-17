@@ -54,8 +54,6 @@ NO_COLOR="${NO_COLOR:-}" ASCII_MODE="${ASCII_MODE:-}"
 setup_colors
 setup_glyphs
 
-resolve_providers
-
 ALL_SECTION_DIRS=()
 ALL_SECTION_ITEMS=()
 ALL_SECTION_COUNTS=()
@@ -121,6 +119,47 @@ done
 
 TOTAL_CANDIDATES=${#CANDIDATE_NAMES[@]}
 [[ $TOTAL_CANDIDATES -eq 0 ]] && { render_table; exit 0; }
+
+# ── Scan phase: build quick table (version=?) ──
+_current_section=""
+_section_start=0
+for ((_si=0; _si<TOTAL_CANDIDATES; _si++)); do
+  ALL_SECTION_ITEMS+=("${CANDIDATE_NAMES[$_si]}|?|${CANDIDATE_PATHS[$_si]}")
+  this_label="${CANDIDATE_SECTIONS[$_si]}"
+  if [[ "$this_label" != "$_current_section" ]]; then
+    if [[ -n "$_current_section" ]]; then
+      ALL_SECTION_COUNTS+=($(( ${#ALL_SECTION_ITEMS[@]} - 1 - _section_start )))
+    fi
+    _current_section="$this_label"
+    _section_start=$((${#ALL_SECTION_ITEMS[@]} - 1))
+    ALL_SECTION_DIRS+=("$_current_section")
+    ALL_SECTION_START+=("$_section_start")
+  fi
+done
+if [[ -n "$_current_section" ]]; then
+  ALL_SECTION_COUNTS+=($(( ${#ALL_SECTION_ITEMS[@]} - _section_start )))
+fi
+
+render_table
+printf 'Found %d tools.\n' "$TOTAL_CANDIDATES" >&2
+
+# ── Prompt: probe versions? ──
+if [[ -t 1 ]]; then
+  printf 'Probe versions? [y/N] ' >&2
+  read -r _answer || true
+  [[ "$_answer" =~ ^[yY] ]] || exit 0
+else
+  exit 0
+fi
+
+# ── Probe phase: providers + Pass 2 ──
+resolve_providers
+
+# Reset section arrays for full probe pass
+ALL_SECTION_DIRS=()
+ALL_SECTION_ITEMS=()
+ALL_SECTION_COUNTS=()
+ALL_SECTION_START=()
 
 # ── Pass 2: Parallel probe versions with progress ──
 _start_time=$SECONDS

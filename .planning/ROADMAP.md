@@ -19,7 +19,9 @@
 **Depends on:** None
 **Artifacts:** `deliverables/gstack/qa-test-what-is-installed-2026-05-17.md`
 
-### Phase 2: Fix Command Injection 🔴 P0
+### Phase 2: Fix Command Injection ✅
+**Status:** Complete (commit 2cde3da)
+**Fix:** Array expansion `"${cmd_arr[@]}"` replaces bare `$cmd` in `command` invocation
 **Source:** Security audit (OWASP A03, F-001) — 2026-05-17
 **Goal:** Fix unquoted `$cmd` expansion in `lib/providers/_common.sh:19`. Use array expansion `"${cmd_arr[@]}"` instead of bare `$cmd`.
 **Impact:** Command injection vector if future providers pass user-influenced input.

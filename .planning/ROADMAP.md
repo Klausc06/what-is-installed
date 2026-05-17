@@ -7,8 +7,14 @@
 
 - ✅ **v0.4.3** — Current release (shipped)
 - ✅ **v0.5.0** — P0+P1 fixes from full inspection (shipped 2026-05-17)
+- 🎯 **v0.6.0** — Dual-mode: quick detect / full probe
 
 ## Phases
+
+### Phase 6: Quick Detect Mode
+**Goal:** Split tool into two modes — `--quick` (detect only, no version probing, sub-second) and default (full probe with versions). Let user choose speed vs completeness.
+**Depends on:** None
+**Status:** 🔵 Discussing
 
 ### Phase 1: Fix Test Suite ✅
 **Status:** Complete (commit 23a2ee8)

@@ -70,7 +70,7 @@ Commands from `/bin`, `/usr/bin`, and other system directories are skipped — y
 ## Architecture
 
 ```
-bin/what-is-installed       # Entry point (213 lines)
+bin/what-is-installed       # Entry point (260 lines), scan-first interactive
 lib/
   detect.sh                 # OS detection
   shared.sh                 # timeout runner, version probing, cache

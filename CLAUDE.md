@@ -6,8 +6,8 @@ what-is-installed — Shell script that scans PATH for commands in non-system di
 
 ## ENVIRONMENT
 - Bash 3.2+ compatible (macOS default)
-- Entry point: `bin/what-is-installed` (213 lines)
-- Libraries: `lib/detect.sh` (OS), `lib/shared.sh` (utils + cache), `lib/render.sh` (output), `lib/platform/{macos,linux,windows,bsd}.sh` (per-OS), `lib/providers/{cargo,brew,winget,scoop,choco,rpm,pacman,apt,snap,flatpak,_common,resolve}.sh` (12 files: 10 package managers + 2 infra)
+- Entry point: `bin/what-is-installed` (260 lines), scan-first interactive
+- Two-pass architecture: Pass 1 (scan, <1s) → interactive prompt → Pass 2 (version probe, ~5s)
 - No disk cache — every run is a live fresh snapshot
 - No dependencies, but `brew install coreutils` on macOS enables GNU timeout (gtimeout) for ~15x faster version probing
 - Provider architecture: 10 package managers bulk-query versions before PATH scan; `_wi_cache_add` + `_CACHE_STR` O(1) lookup

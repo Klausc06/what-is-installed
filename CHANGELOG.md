@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.6.0 (2026-05-17)
+
+### Features
+- **Interactive quick-detect mode**: Scan-first architecture — Pass 1 runs immediately (<1s), renders table with `?` version placeholders, then prompts "Probe versions? [y/N]". On 'y', runs providers + Pass 2 with full version probing.
+- **Non-TTY behavior**: In pipes, CI, and scripts, scan-only output with no prompt (breaking change — previously always probed versions).
+
+### Changed
+- `resolve_providers` now runs only when user opts into version probing (saves ~2s in scan mode).
+- Version sentinel changed from `-` to `?` for unknown versions.
+
+### Fixed
+- **P0**: Test suite (2/2 fail → 10/10 pass)
+- **P0**: Command injection in `_wi_provider_parse_regex` (bare `$cmd` → `${cmd_arr[@]}`)
+- **P1**: Pass 2 subshell cache loss (no longer re-sources detect.sh/shared.sh)
+- **P1**: `.sh` suffix and `g[` tools filtered from output
+- **P1**: `eval "$_orig_extglob"` → boolean `shopt` management
+- **P1**: `install.sh` integrity pre-flight + `.bashrc` backup
+- **P1**: `run_with_timeout` temp file cleanup via trap
+
+### CI
+- macOS runner added (`macos-latest`)
+- shellcheck severity: `error` → `warning`
+
+### Tests
+- 7→10 tests, including cache operations, timeout, platform contract, scan mode
 
 ## v0.4.3 (2026-05-16)
 

@@ -1,5 +1,30 @@
 # 更新日志
 
+## v0.6.0（2026-05-17）
+
+### 新功能
+- **交互式快速检测模式**：先扫描后询问——Pass 1 立即运行（<1s），表格版本列显示 `?`，然后提示"Probe versions? [y/N]"。输入 `y` 则运行 provider + Pass 2 完整版本探测。
+- **非 TTY 行为**：管道、CI、脚本中只扫描不提示（破坏性变更——之前默认探测版本）。
+
+### 变更
+- `resolve_providers` 仅在用户选择探测版本时运行（扫描模式节省 ~2s）。
+- 版本占位符从 `-` 改为 `?`。
+
+### 修复
+- **P0**：测试套件（2/2 失败 → 10/10 通过）
+- **P0**：`_wi_provider_parse_regex` 命令注入（裸 `$cmd` → `${cmd_arr[@]}`）
+- **P1**：Pass 2 子 shell 缓存丢失（不再 re-source detect.sh/shared.sh）
+- **P1**：`.sh` 后缀和 `g[` 工具从输出中过滤
+- **P1**：`eval "$_orig_extglob"` → 布尔 `shopt` 管理
+- **P1**：`install.sh` 完整性预检 + `.bashrc` 备份
+- **P1**：`run_with_timeout` 临时文件 trap 清理
+
+### CI
+- 新增 macOS runner（`macos-latest`）
+- shellcheck 严重度：`error` → `warning`
+
+### 测试
+- 7→10 个测试，包括缓存操作、超时、平台契约、扫描模式
 
 ## v0.4.3（2026-05-16）
 

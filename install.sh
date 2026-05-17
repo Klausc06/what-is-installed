@@ -36,6 +36,20 @@ detect_desktop_dir() {
 
 OS="$(detect_os)"
 
+# ── integrity pre-flight ────────────────────────────
+# Verify source files exist before installing.
+# For supply-chain integrity, verify the repo with:
+#   git verify-commit HEAD  (requires signed commits)
+#   git log -1 --format="%H"  (verify against known-good hash)
+if [[ ! -f "$ROOT/bin/what-is-installed" ]]; then
+  echo "ERROR: bin/what-is-installed not found — is the repo clone intact?" >&2
+  exit 1
+fi
+if [[ ! -d "$ROOT/lib" ]]; then
+  echo "ERROR: lib/ directory not found — is the repo clone intact?" >&2
+  exit 1
+fi
+
 echo "==> what-is-installed installer ($OS)"
 echo
 
@@ -81,8 +95,9 @@ if [[ ":${PATH}:" != *":${BIN_DIR}:"* ]]; then
     windows)
       rc="$HOME/.bashrc"
       if [[ -f "$rc" ]] && ! grep -q '$HOME/.local/bin' "$rc" 2>/dev/null; then
+        cp "$rc" "$rc.bak" 2>/dev/null || true
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc"
-        echo "  ⚠  Added $BIN_DIR to $rc"
+        echo "  ⚠  Added $BIN_DIR to $rc (backup: $rc.bak)"
         echo "     Restart your Git Bash terminal for it to take effect."
       else
         echo "  ⚠  $BIN_DIR is not in your PATH."

@@ -1,5 +1,10 @@
 # shellcheck shell=bash
 # lib/detect.sh — OS detection
+#
+# Note: This file checks symlink targets at runtime. A TOCTOU race is
+# theoretically possible if a symlink is swapped between check and use,
+# but the risk is low — the main script uses mktemp + EXIT trap for
+# all temporary files, and the detection runs once at startup.
 
 _detect_os() {
   case "$(uname -s)" in

@@ -1,0 +1,20 @@
+# Shell artifacts
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+*.log
+/tmp/
+
+# Build artifacts (if any)
+*.o

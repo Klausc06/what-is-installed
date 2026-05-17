@@ -166,7 +166,7 @@ get_command_version() {
 
   local result
   if [[ -z "$output" ]]; then
-    result="-"
+    result="?"
   else
     if command -v iconv >/dev/null 2>&1 && ! printf '%s' "$output" | iconv -f utf-8 -t utf-8 >/dev/null 2>&1; then
       output="$(printf '%s' "$output" | iconv -f latin1 -t utf-8 2>/dev/null || printf '%s' "$output")"
@@ -178,7 +178,7 @@ get_command_version() {
     elif [[ "$first_line" =~ [Vv]ersion[[:space:]]+([0-9]+(\.[0-9]+)+) ]]; then
       result="${BASH_REMATCH[1]}"
     else
-      result="-"
+      result="?"
     fi
   fi
 
